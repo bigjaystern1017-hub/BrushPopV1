@@ -1,0 +1,40 @@
+import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AnimatePresence } from "framer-motion";
+import NotFound from "@/pages/not-found";
+
+import KidSelect from "./pages/KidSelect";
+import Setup from "./pages/Setup";
+import Brush from "./pages/Brush";
+import Celebrate from "./pages/Celebrate";
+import Collection from "./pages/Collection";
+
+function Router() {
+  return (
+    <AnimatePresence mode="wait">
+      <Switch>
+        <Route path="/" component={KidSelect} />
+        <Route path="/setup" component={Setup} />
+        <Route path="/setup/:id" component={Setup} />
+        <Route path="/brush/:id" component={Brush} />
+        <Route path="/celebrate/:id" component={Celebrate} />
+        <Route path="/collection/:id" component={Collection} />
+        <Route component={NotFound} />
+      </Switch>
+    </AnimatePresence>
+  );
+}
+
+function App() {
+  return (
+    <TooltipProvider>
+      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+        <Router />
+      </WouterRouter>
+      <Toaster />
+    </TooltipProvider>
+  );
+}
+
+export default App;

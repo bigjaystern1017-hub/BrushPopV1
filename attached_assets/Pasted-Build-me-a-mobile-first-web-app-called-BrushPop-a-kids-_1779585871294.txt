@@ -1,0 +1,36 @@
+Build me a mobile-first web app called "BrushPop" — a kids' toothbrush timer that reveals a hidden image as they brush.
+Core flow:
+
+Parent Setup Screen: Parent sees a simple screen with a "+" button to add a kid profile. They enter the kid's name, upload an image (from camera roll or photo library — must handle any aspect ratio gracefully by auto-cropping to fill a square), and pick a "wall" environment from preset options. There should also be a "Surprise Mode" toggle — if on, the kid can't see what image is behind the wall until they start brushing. Save profiles to local storage — no backend, no auth, no database.
+Preset wall/environment options (start with 6): Space, Jungle, Underwater, Playground, Graffiti Wall, Fantasy Castle. Each is just a themed color palette and pattern/texture that forms the "wall" covering the image — think colored blocks, bubbles, leaves, stars, bricks, etc. appropriate to the theme.
+Kid Select Screen: Big friendly buttons showing each kid's name with a fun avatar or their initial in a colorful circle. Kid taps their name.
+Brushing Screen (THE MAIN EVENT): Full screen. The uploaded image is hidden behind the themed wall made up of ~30-40 tiles/blocks. A big friendly "START BRUSHING!" button. When tapped, a 2-minute countdown begins (show time remaining in a kid-friendly way — NOT a boring clock, maybe a fun progress indicator like stars filling up or a character moving across the screen). The wall tiles/blocks break away, dissolve, pop, or animate away progressively over the 2 minutes, slowly revealing the image underneath. The animation quality matters enormously here — the tiles should feel satisfying to watch disappear. Think: pop with a little bounce, or float away, or crumble. Not a PowerPoint wipe. The reveal should be somewhat random, not just left-to-right, so the image is a mystery until near the end.
+Celebration Screen: When timer hits zero, the full image is revealed with a fun celebration animation (confetti, stars, whatever feels joyful). The image gets "collected" and added to the kid's collection. Show their current streak (days in a row they've brushed). Big "Done!" button returns to kid select.
+Collection Screen: Accessible from the kid's profile — a grid of all images they've revealed, with the date. This is their trophy case.
+
+Design requirements:
+
+Mobile-first, designed for phone screens
+The entire UI should feel warm, playful, and premium — NOT like a hackathon project. Think Headspace-meets-Nintendo quality of visual design. Rounded corners, soft shadows, smooth transitions between all screens.
+Use a playful but clean sans-serif font
+Colors should be vibrant but not garish — think modern kids' brand, not Fisher-Price
+Every screen transition should be smooth and animated
+NO white flashes between screens, no layout jank, no visual glitches
+The app should feel like a $4.99 app that someone is getting for free
+
+Technical notes:
+
+React + Tailwind or whatever produces the cleanest result
+All data in localStorage — no backend whatsoever
+Images stored as base64 in localStorage (fine for a few images)
+Make sure image upload handles photos from a phone camera roll gracefully — auto-orient, auto-crop to square, resize to reasonable dimensions so localStorage doesn't explode
+PWA-friendly so it can be added to home screen
+
+What NOT to build:
+
+No login/auth
+No backend/database
+No in-app purchases (yet)
+No sound (yet)
+No multiple reveal animation styles (yet) — just make ONE that looks really good
+No web image search — just upload from device for now
