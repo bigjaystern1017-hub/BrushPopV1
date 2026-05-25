@@ -12,7 +12,7 @@ const TOTAL_TILES = ROWS * COLS;
 export default function Brush() {
   const [, setLocation] = useLocation();
   const params = useParams();
-  const { getProfile } = useProfiles();
+  const { getProfile, loaded } = useProfiles();
   const profile = getProfile(params.id || "");
 
   const [isBrushing, setIsBrushing] = useState(false);
@@ -24,6 +24,7 @@ export default function Brush() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    if (!loaded) return;
     if (!profile) {
       setLocation("/");
       return;
@@ -35,7 +36,7 @@ export default function Brush() {
       [order[i], order[j]] = [order[j], order[i]];
     }
     popOrderRef.current = order;
-  }, [profile, setLocation]);
+  }, [loaded, profile, setLocation]);
 
   useEffect(() => {
     if (isBrushing && timeLeft > 0) {

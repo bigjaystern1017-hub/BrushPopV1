@@ -5,6 +5,7 @@ const PROFILES_KEY = 'brushpop_profiles';
 
 export function useProfiles() {
   const [profiles, setProfiles] = useState<KidProfile[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(PROFILES_KEY);
@@ -15,6 +16,7 @@ export function useProfiles() {
         console.error("Failed to parse profiles");
       }
     }
+    setLoaded(true);
   }, []);
 
   const saveProfile = (profile: KidProfile) => {

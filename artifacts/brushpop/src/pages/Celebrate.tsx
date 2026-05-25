@@ -7,13 +7,14 @@ import { useSessions } from "@/lib/useSessions";
 export default function Celebrate() {
   const [, setLocation] = useLocation();
   const params = useParams();
-  const { getProfile } = useProfiles();
+  const { getProfile, loaded } = useProfiles();
   const { saveSession, getStreak } = useSessions();
   const profile = getProfile(params.id || "");
   
   const [streak, setStreak] = useState(0);
 
   useEffect(() => {
+    if (!loaded) return;
     if (!profile) {
       setLocation("/");
       return;
@@ -29,13 +30,17 @@ export default function Celebrate() {
     });
 
     // We get the streak AFTER saving, so it includes today
-    // Small timeout to let state settle if needed, but synchronous is fine
     setTimeout(() => {
        setStreak(getStreak(profile.id));
     }, 100);
 
-  }, [profile?.id]);
+  }, [loaded, profile?.id]);
 
+  if (!loaded) return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+    </div>
+  );
   if (!profile) return null;
 
   return (

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useLocation, useParams } from "wouter";
 import { motion } from "framer-motion";
 import { ChevronLeft, Trophy } from "lucide-react";
@@ -7,16 +8,24 @@ import { useSessions } from "@/lib/useSessions";
 export default function Collection() {
   const [, setLocation] = useLocation();
   const params = useParams();
-  const { getProfile } = useProfiles();
+  const { getProfile, loaded } = useProfiles();
   const { getKidSessions } = useSessions();
   
   const profile = getProfile(params.id || "");
   const sessions = getKidSessions(profile?.id || "");
 
-  if (!profile) {
-    setLocation("/");
-    return null;
-  }
+  useEffect(() => {
+    if (loaded && !profile) {
+      setLocation("/");
+    }
+  }, [loaded, profile, setLocation]);
+
+  if (!loaded) return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+    </div>
+  );
+  if (!profile) return null;
 
   // Format date safely
   const formatDate = (dateStr: string) => {
