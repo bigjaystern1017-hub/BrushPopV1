@@ -35,5 +35,5 @@ export function useProfiles() {
     return profiles.find(p => p.id === id);
   };
 
-  return { profiles, saveProfile, deleteProfile, getProfile };
+  return { profiles, saveProfile, deleteProfile, getProfile, loaded };
 }
