@@ -1,0 +1,18 @@
+Yeah, I can see the issues. The tiles look like a generic dark grid floating over the image — there's no visual connection between the "wall" theme and anything fun or kid-friendly. The tiles are all the same flat dark blue, the spacing feels off, the little star emojis scattered around are barely visible and feel like an afterthought, and the overall effect doesn't create any excitement about what's being revealed. It looks like a debugging grid, not a game.
+The core problem is that the "wall" mechanic was built as colored divs with CSS classes. That was fine for getting the logic working but it doesn't create the experience your daughter or any kid would get excited about. Compare this to the Oral-B Disney Magic Timer where the reveal feels magical — tiles that look like real bricks or bubbles or leaves breaking apart with satisfying animations.
+Here's what I'd tell Replit to fix this specifically:
+
+The brushing screen wall/tile reveal needs a major visual upgrade. Right now it looks like a dark grid. It needs to feel fun, thematic, and satisfying to watch. Here's what to change:
+Tile Design: Each tile should NOT be a flat colored rectangle. Based on the selected theme, tiles should look like actual objects:
+
+Space: Dark purple/navy tiles with visible painted-on stars, planets, and moons. Each tile should have a slightly different shade and a random small icon (star, planet, moon, rocket) rendered as an emoji or SVG at a visible size.
+Jungle: Green tiles that look like overlapping leaves — use varying shades of green, different leaf emojis (🌿🍃🌴🍀) rendered prominently on each tile.
+Underwater: Blue tiles in varying ocean shades with visible bubbles, fish, and shell emojis (🐠🐚🫧🐙) on each tile.
+Playground: Bright multicolored tiles — each tile a DIFFERENT vibrant color (red, yellow, blue, green, orange, purple) like colorful building blocks.
+Graffiti: Gray brick-textured tiles with random bright splashes of neon color on each one.
+Fantasy: Purple and pink tiles with sparkles, crystals, and castle emojis (✨🏰💎👑) on each tile.
+
+Tile Shape: Round the corners significantly (border-radius: 8px). Add a subtle inner shadow or border so each tile looks 3D and tactile, like a physical object that's going to pop off.
+Pop Animation: When a tile disappears, it should scale up slightly FIRST (like it's inflating), then burst away with rotation and fade. Add a small particle-like effect — even just 2-3 tiny colored dots that fly outward briefly. The current exit animation is too subtle.
+Grid Spacing: Increase the gap between tiles slightly so you can see peeks of the image through the cracks as a teaser. This builds anticipation.
+Background Image: Add a very subtle pulsing glow or shimmer behind the tiles so the kid knows something exciting is hidden underneath.

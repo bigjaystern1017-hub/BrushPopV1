@@ -3,11 +3,117 @@ import { useLocation, useParams } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { useProfiles } from "@/lib/useProfiles";
+import type { WallTheme } from "@/lib/types";
 
-const TOTAL_TIME = 120; // 2 minutes
+const TOTAL_TIME = 120;
 const ROWS = 7;
 const COLS = 5;
 const TOTAL_TILES = ROWS * COLS;
+
+interface ThemeConfig {
+  colors: string[];
+  icons: string[];
+  borderColors: string[];
+}
+
+const THEME_CONFIG: Record<WallTheme, ThemeConfig> = {
+  space: {
+    colors: ["#1a1a2e", "#16213e", "#0f3460", "#3a0ca3", "#2b1d5a", "#480ca8", "#240046"],
+    icons: ["⭐", "🌙", "🪐", "🚀", "💫", "🌟", "☄️", "🛸"],
+    borderColors: ["#090917", "#0a1225", "#071e3d", "#210568"],
+  },
+  jungle: {
+    colors: ["#1b4332", "#2d6a4f", "#40916c", "#1a3a2a", "#355e3b", "#2f6547", "#145a32"],
+    icons: ["🌿", "🍃", "🌴", "🍀", "🌱", "🌺", "🦜", "🐸"],
+    borderColors: ["#0d2118", "#163527", "#204b36", "#0e2e1a"],
+  },
+  underwater: {
+    colors: ["#03045e", "#0077b6", "#0096c7", "#023e8a", "#1a5276", "#0466c8", "#1d3557"],
+    icons: ["🐠", "🐚", "🫧", "🐙", "🐟", "🦀", "🐬", "🦑"],
+    borderColors: ["#010230", "#00457a", "#00567a", "#012050"],
+  },
+  playground: {
+    colors: ["#e63946", "#f4a261", "#2a9d8f", "#457b9d", "#e9c46a", "#8338ec", "#fb5607", "#3a86ff"],
+    icons: ["🎈", "⭐", "🎪", "🎯", "🎡", "🎠", "🎭", "🌈"],
+    borderColors: ["#a01b23", "#b07030", "#1a6b62", "#2e5570"],
+  },
+  graffiti: {
+    colors: ["#6c757d", "#495057", "#868e96", "#5c636a", "#74797f", "#4a4e69", "#6b6f7e"],
+    icons: ["💥", "⚡", "🔥", "✳️", "💢", "🎨", "💣", "🌀"],
+    borderColors: ["#343a40", "#1e2124", "#4a4f54", "#2a2d30"],
+  },
+  fantasy: {
+    colors: ["#6a0572", "#7b2d8b", "#5a189a", "#7209b7", "#560bad", "#3a0ca3", "#9d4edd"],
+    icons: ["✨", "🏰", "💎", "👑", "🌟", "🔮", "🦄", "🧚"],
+    borderColors: ["#380041", "#42184a", "#2e0c50", "#3c0080"],
+  },
+};
+
+interface TileProp {
+  bgColor: string;
+  borderColor: string;
+  icon: string;
+  showIcon: boolean;
+  exitRotate: number;
+  exitX: number;
+  exitY: number;
+}
+
+function buildTileProps(theme: WallTheme): TileProp[] {
+  const config = THEME_CONFIG[theme];
+  return Array.from({ length: TOTAL_TILES }, (_, i) => ({
+    bgColor: theme === "playground"
+      ? config.colors[i % config.colors.length]
+      : config.colors[Math.floor(i * 1.618034) % config.colors.length],
+    borderColor: config.borderColors[i % config.borderColors.length],
+    icon: config.icons[Math.floor(i * 2.718) % config.icons.length],
+    showIcon: (i * 7 + 3) % 10 < 7,
+    exitRotate: ((i * 137) % 140) - 70,
+    exitX: ((i * 53) % 60) - 30,
+    exitY: ((i * 37) % 50) - 25,
+  }));
+}
+
+interface WallTileProps {
+  index: number;
+  props: TileProp;
+}
+
+function WallTile({ index, props }: WallTileProps) {
+  return (
+    <motion.div
+      key={`tile-${index}`}
+      initial={{ scale: 1, opacity: 1 }}
+      exit={{
+        scale: [1, 1.4, 0],
+        opacity: [1, 1, 0],
+        rotate: props.exitRotate,
+        x: props.exitX,
+        y: props.exitY,
+      }}
+      transition={{
+        duration: 0.38,
+        times: [0, 0.28, 1],
+        ease: ["easeOut", "easeIn"],
+      }}
+      className="w-full h-full rounded-xl relative overflow-hidden select-none"
+      style={{
+        backgroundColor: props.bgColor,
+        boxShadow: `inset 0 -4px 0 ${props.borderColor}, inset 0 1px 0 rgba(255,255,255,0.18), inset 0 0 12px rgba(0,0,0,0.25)`,
+        border: `1px solid ${props.borderColor}`,
+      }}
+    >
+      {props.showIcon && (
+        <span
+          className="absolute inset-0 flex items-center justify-center text-2xl"
+          style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.5))" }}
+        >
+          {props.icon}
+        </span>
+      )}
+    </motion.div>
+  );
+}
 
 export default function Brush() {
   const [, setLocation] = useLocation();
@@ -17,11 +123,13 @@ export default function Brush() {
 
   const [isBrushing, setIsBrushing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
-  const [visibleTiles, setVisibleTiles] = useState<number[]>(Array.from({length: TOTAL_TILES}, (_, i) => i));
-  
-  // Create a randomized order for tiles to pop
+  const [visibleTiles, setVisibleTiles] = useState<number[]>(
+    Array.from({ length: TOTAL_TILES }, (_, i) => i)
+  );
+
   const popOrderRef = useRef<number[]>([]);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tilePropsMemo = useRef<TileProp[]>([]);
 
   useEffect(() => {
     if (!loaded) return;
@@ -29,51 +137,49 @@ export default function Brush() {
       setLocation("/");
       return;
     }
-    // Shuffle tiles
-    const order = Array.from({length: TOTAL_TILES}, (_, i) => i);
+    const order = Array.from({ length: TOTAL_TILES }, (_, i) => i);
     for (let i = order.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [order[i], order[j]] = [order[j], order[i]];
     }
     popOrderRef.current = order;
+    tilePropsMemo.current = buildTileProps(profile.theme);
   }, [loaded, profile, setLocation]);
 
   useEffect(() => {
     if (isBrushing && timeLeft > 0) {
       timerRef.current = setTimeout(() => {
-        setTimeLeft(t => t - 1);
-        
-        // Calculate how many tiles should be hidden by now
-        // e.g. at 120s, 0 hidden. at 0s, 35 hidden.
-        const targetHiddenCount = Math.floor(((TOTAL_TIME - (timeLeft - 1)) / TOTAL_TIME) * TOTAL_TILES);
-        const currentHiddenCount = TOTAL_TILES - visibleTiles.length;
-        
-        if (targetHiddenCount > currentHiddenCount) {
-          // Pop the next tile
-          const nextToPop = popOrderRef.current[currentHiddenCount];
+        setTimeLeft((t) => t - 1);
+        const targetHidden = Math.floor(
+          ((TOTAL_TIME - (timeLeft - 1)) / TOTAL_TIME) * TOTAL_TILES
+        );
+        const currentHidden = TOTAL_TILES - visibleTiles.length;
+        if (targetHidden > currentHidden) {
+          const nextToPop = popOrderRef.current[currentHidden];
           if (nextToPop !== undefined) {
-             setVisibleTiles(prev => prev.filter(t => t !== nextToPop));
+            setVisibleTiles((prev) => prev.filter((t) => t !== nextToPop));
           }
         }
       }, 1000);
     } else if (timeLeft === 0 && isBrushing) {
-      // Boom!
       setVisibleTiles([]);
       setTimeout(() => {
         setLocation(`/celebrate/${profile?.id}`);
       }, 1500);
     }
-    
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [isBrushing, timeLeft, visibleTiles.length, profile?.id, setLocation]);
 
+  if (!loaded) return (
+    <div className="h-[100dvh] w-full max-w-md mx-auto bg-black flex items-center justify-center">
+      <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+    </div>
+  );
   if (!profile) return null;
 
-  const startBrushing = () => {
-    setIsBrushing(true);
-  };
+  const startBrushing = () => setIsBrushing(true);
 
   const handleCancel = () => {
     if (confirm("Stop brushing? You'll lose your progress!")) {
@@ -81,99 +187,151 @@ export default function Brush() {
     }
   };
 
-  // Format MM:SS
   const mins = Math.floor(timeLeft / 60);
   const secs = timeLeft % 60;
-  const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+  const timeStr = `${mins}:${secs.toString().padStart(2, "0")}`;
 
-  // Top icons progress
   const totalIcons = 8;
   const iconsRemaining = Math.ceil((timeLeft / TOTAL_TIME) * totalIcons);
 
+  const revealPercent = ((TOTAL_TILES - visibleTiles.length) / TOTAL_TILES) * 100;
+
   return (
-    <div className="h-[100dvh] w-full max-w-md mx-auto bg-black relative overflow-hidden flex flex-col">
-      {/* Background Image */}
+    <div className="h-[100dvh] w-full max-w-md mx-auto bg-black relative overflow-hidden">
+
+      {/* Background Image with shimmer */}
       <div className="absolute inset-0 z-0">
-        <img src={profile.imageBase64} alt="Hidden" className="w-full h-full object-cover" />
+        <img
+          src={profile.imageBase64}
+          alt="Hidden"
+          className="w-full h-full object-cover"
+        />
+        {/* Pulsing glow layer that hints at the hidden image */}
+        <motion.div
+          className="absolute inset-0"
+          animate={{ opacity: [0.35, 0.55, 0.35] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+          style={{
+            background: "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.4) 100%)",
+          }}
+        />
       </div>
 
-      {/* Wall Grid */}
-      <div className="absolute inset-0 z-10 p-2 pt-20 pb-40">
-        <div className="w-full h-full grid gap-1" style={{ gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`, gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}>
-          {Array.from({length: TOTAL_TILES}).map((_, i) => (
-             <AnimatePresence key={i}>
-                {visibleTiles.includes(i) && (
-                  <motion.div
-                    exit={{ scale: 0, opacity: 0, rotate: (Math.random() - 0.5) * 45 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    className={`w-full h-full rounded-sm theme-${profile.theme} relative overflow-hidden`}
-                  >
-                    {/* Add subtle variation/icons to some tiles based on theme */}
-                    {i % 7 === 0 && profile.theme === 'space' && <span className="absolute top-1 left-1 text-[10px] opacity-50">⭐</span>}
-                    {i % 5 === 0 && profile.theme === 'jungle' && <span className="absolute bottom-1 right-1 text-[10px] opacity-40">🌿</span>}
-                    {i % 8 === 0 && profile.theme === 'underwater' && <span className="absolute top-2 right-2 text-[10px] opacity-30">🫧</span>}
-                  </motion.div>
-                )}
-             </AnimatePresence>
+      {/* Wall Grid — full screen */}
+      <div className="absolute inset-0 z-10 p-1.5">
+        <div
+          className="w-full h-full grid gap-1.5"
+          style={{
+            gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
+            gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
+          }}
+        >
+          {Array.from({ length: TOTAL_TILES }).map((_, i) => (
+            <AnimatePresence key={i}>
+              {visibleTiles.includes(i) && tilePropsMemo.current[i] && (
+                <WallTile index={i} props={tilePropsMemo.current[i]} />
+              )}
+            </AnimatePresence>
           ))}
         </div>
       </div>
 
-      {/* UI Overlay */}
+      {/* UI Overlay — sits above tiles */}
       <div className="absolute inset-0 z-20 flex flex-col justify-between pointer-events-none">
-        
-        {/* Top Header */}
+
+        {/* Top bar */}
         <div className="p-4 flex justify-between items-start pointer-events-auto">
-          <button onClick={handleCancel} className="p-3 bg-black/30 backdrop-blur-md rounded-full text-white">
-            <X className="w-6 h-6" />
+          <button
+            onClick={handleCancel}
+            className="p-3 bg-black/40 backdrop-blur-md rounded-full text-white shadow-lg"
+            data-testid="button-cancel"
+          >
+            <X className="w-5 h-5" />
           </button>
-          
+
           {isBrushing && (
-            <div className="flex flex-col items-center">
-              <div className="bg-black/40 backdrop-blur-md rounded-full py-2 px-4 flex gap-1 mb-2">
-                {Array.from({length: totalIcons}).map((_, i) => (
-                   <motion.span 
-                    key={i} 
-                    animate={{ opacity: i < iconsRemaining ? 1 : 0.2, scale: i < iconsRemaining ? 1 : 0.8 }}
-                    className="text-xl"
-                   >
-                     🦷
-                   </motion.span>
+            <motion.div
+              initial={{ y: -40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="flex flex-col items-center gap-2"
+            >
+              <div className="bg-black/50 backdrop-blur-md rounded-full py-2 px-3 flex gap-1 shadow-lg">
+                {Array.from({ length: totalIcons }).map((_, i) => (
+                  <motion.span
+                    key={i}
+                    animate={{
+                      opacity: i < iconsRemaining ? 1 : 0.2,
+                      scale: i < iconsRemaining ? 1 : 0.75,
+                    }}
+                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                    className="text-lg"
+                  >
+                    🦷
+                  </motion.span>
                 ))}
               </div>
-              <div className="bg-primary text-white font-black text-2xl py-1 px-4 rounded-2xl shadow-lg border-2 border-white/20">
+              <div className="bg-primary text-white font-black text-2xl py-1 px-5 rounded-2xl shadow-lg border-2 border-white/20">
                 {timeStr}
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
 
-        {/* Bottom Controls */}
-        <div className="p-6 pb-safe pointer-events-auto bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-          {!isBrushing ? (
-            <motion.div 
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="text-center"
+        {/* Reveal progress hint */}
+        {isBrushing && revealPercent > 0 && (
+          <div className="absolute top-24 right-4 pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white/90 backdrop-blur-sm rounded-2xl px-3 py-1.5 shadow-lg"
             >
-              <h2 className="text-3xl font-black text-white mb-6 drop-shadow-md">Ready, {profile.name}?</h2>
-              <button 
-                onClick={startBrushing}
-                className="w-full bg-primary text-white text-2xl font-black py-5 rounded-full shadow-[0_8px_0_hsl(355,85%,45%)] hover:translate-y-[2px] hover:shadow-[0_6px_0_hsl(355,85%,45%)] active:translate-y-[8px] active:shadow-none transition-all"
-              >
-                START BRUSHING!
-              </button>
-              <p className="text-white/70 font-bold mt-4">2 Minutes</p>
+              <span className="text-xs font-black text-primary">
+                {Math.round(revealPercent)}% revealed!
+              </span>
             </motion.div>
-          ) : (
-            <div className="text-center">
-               <h2 className="text-xl font-bold text-white mb-2 drop-shadow-md">Keep going, {profile.name}!</h2>
-               <p className="text-white/80 font-medium">Brush every tooth!</p>
-            </div>
-          )}
+          </div>
+        )}
+
+        {/* Bottom controls */}
+        <div className="p-6 pb-8 pointer-events-auto bg-gradient-to-t from-black/90 via-black/50 to-transparent">
+          <AnimatePresence mode="wait">
+            {!isBrushing ? (
+              <motion.div
+                key="start"
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 50, opacity: 0 }}
+                className="text-center"
+              >
+                <h2 className="text-3xl font-black text-white mb-5 drop-shadow-md">
+                  Ready, {profile.name}?
+                </h2>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={startBrushing}
+                  className="w-full bg-primary text-white text-2xl font-black py-5 rounded-full shadow-[0_8px_0_hsl(355,85%,45%)] active:translate-y-2 active:shadow-[0_2px_0_hsl(355,85%,45%)] transition-all"
+                  data-testid="button-start-brushing"
+                >
+                  START BRUSHING! 🦷
+                </motion.button>
+                <p className="text-white/60 font-bold mt-3 text-sm">2 minutes · tiles pop away as you brush!</p>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="brushing"
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="text-center"
+              >
+                <h2 className="text-xl font-black text-white mb-1 drop-shadow-md">
+                  Keep going, {profile.name}! 💪
+                </h2>
+                <p className="text-white/70 font-semibold text-sm">Brush every tooth!</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
-
     </div>
   );
 }
