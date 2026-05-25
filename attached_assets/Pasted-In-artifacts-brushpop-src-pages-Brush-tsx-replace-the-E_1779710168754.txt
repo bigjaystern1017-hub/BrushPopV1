@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+In artifacts/brushpop/src/pages/Brush.tsx, replace the ENTIRE file contents with this:
+tsximport { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useParams } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
@@ -22,7 +23,7 @@ function tileEasing(t: number): number {
 export default function Brush() {
   const [, setLocation] = useLocation();
   const params = useParams();
-  const { getProfile, loaded } = useProfiles();
+  const { getProfile } = useProfiles();
   const profile = getProfile(params.id || "");
 
   const [isBrushing, setIsBrushing] = useState(false);
@@ -36,7 +37,6 @@ export default function Brush() {
   const navigatedRef = useRef(false);
 
   useEffect(() => {
-    if (!loaded) return;
     if (!profile) {
       setLocation("/");
       return;
@@ -47,7 +47,7 @@ export default function Brush() {
       [order[i], order[j]] = [order[j], order[i]];
     }
     popOrderRef.current = order;
-  }, [loaded, profile, setLocation]);
+  }, [profile, setLocation]);
 
   const stopTimer = useCallback(() => {
     if (intervalRef.current !== null) {
@@ -112,11 +112,6 @@ export default function Brush() {
     }
   };
 
-  if (!loaded) return (
-    <div className="h-[100dvh] w-full max-w-md mx-auto bg-black flex items-center justify-center">
-      <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-    </div>
-  );
   if (!profile) return null;
 
   const mins = Math.floor(timeLeft / 60);
@@ -193,7 +188,6 @@ export default function Brush() {
           <button
             onClick={handleCancel}
             className="p-3 bg-black/30 backdrop-blur-md rounded-full text-white"
-            data-testid="button-cancel"
           >
             <X className="w-6 h-6" />
           </button>
@@ -234,7 +228,6 @@ export default function Brush() {
               </h2>
               <button
                 onClick={startBrushing}
-                data-testid="button-start-brushing"
                 className="w-full bg-primary text-white text-2xl font-black py-5 rounded-full shadow-[0_8px_0_hsl(355,85%,45%)] hover:translate-y-[2px] hover:shadow-[0_6px_0_hsl(355,85%,45%)] active:translate-y-[8px] active:shadow-none transition-all"
               >
                 START BRUSHING!
