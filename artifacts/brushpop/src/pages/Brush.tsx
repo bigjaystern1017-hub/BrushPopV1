@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { useProfiles } from "@/lib/useProfiles";
 
 const TOTAL_TIME = 120;
-const ROWS = 7;
+const ROWS = 8;
 const COLS = 5;
 const TOTAL_TILES = ROWS * COLS;
 
@@ -134,12 +134,12 @@ export default function Brush() {
       </div>
 
       {/* Wall Grid */}
-      <div className="absolute inset-0 z-10 p-2 pt-20 pb-40">
+      <div className="absolute inset-0 z-10">
         <div
-          className="w-full h-full grid gap-1"
+          className="w-full h-full grid gap-0"
           style={{
-            gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-            gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
+            gridTemplateRows: `repeat(${ROWS}, 1fr)`,
+            gridTemplateColumns: `repeat(${COLS}, 1fr)`,
           }}
         >
           {Array.from({ length: TOTAL_TILES }).map((_, i) => (
@@ -156,10 +156,7 @@ export default function Brush() {
                     times: [0, 0.3, 1],
                     ease: "easeOut",
                   }}
-                  className={`w-full h-full rounded-lg theme-${profile.theme} relative overflow-hidden`}
-                  style={{
-                    boxShadow: "inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -2px 4px rgba(0,0,0,0.3)",
-                  }}
+                  className={`w-full h-full theme-${profile.theme} relative overflow-hidden`}
                 >
                   {i % 7 === 0 && profile.theme === "space" && (
                     <span className="absolute top-1 left-1 text-sm opacity-60">⭐</span>
