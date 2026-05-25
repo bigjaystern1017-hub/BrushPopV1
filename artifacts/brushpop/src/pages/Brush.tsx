@@ -5,11 +5,33 @@ import { X } from "lucide-react";
 import { useProfiles } from "@/lib/useProfiles";
 import type { WallTheme } from "@/lib/types";
 
-const TOTAL_TIME = 120;
+const TOTAL_TIME = 120; // seconds
 const ROWS = 7;
 const COLS = 5;
-const TOTAL_TILES = ROWS * COLS;
+const TOTAL_TILES = ROWS * COLS; // 35
 
+// --- Dramatic pacing curve ---
+// Slow start (first 25% of time = ~14% of tiles revealed)
+// Steady middle (25–83% of time)
+// Fast finale (last 17% of time = rapid bursting)
+function expectedRevealed(elapsedSeconds: number): number {
+  const t = Math.min(elapsedSeconds / TOTAL_TIME, 1);
+  let progress: number;
+  if (t < 0.25) {
+    // Slow ease-in: first 30s reveals ~5 tiles
+    progress = (t / 0.25) ** 2 * 0.14;
+  } else if (t < 0.83) {
+    // Steady linear middle
+    progress = 0.14 + ((t - 0.25) / 0.58) * 0.67;
+  } else {
+    // Fast finale: ease-out burst for last ~20s
+    const ft = (t - 0.83) / 0.17;
+    progress = 0.81 + ft * (2 - ft) * 0.19;
+  }
+  return Math.floor(progress * TOTAL_TILES);
+}
+
+// --- Theme config ---
 interface ThemeConfig {
   colors: string[];
   icons: string[];
@@ -62,9 +84,10 @@ interface TileProp {
 function buildTileProps(theme: WallTheme): TileProp[] {
   const config = THEME_CONFIG[theme];
   return Array.from({ length: TOTAL_TILES }, (_, i) => ({
-    bgColor: theme === "playground"
-      ? config.colors[i % config.colors.length]
-      : config.colors[Math.floor(i * 1.618034) % config.colors.length],
+    bgColor:
+      theme === "playground"
+        ? config.colors[i % config.colors.length]
+        : config.colors[Math.floor(i * 1.618034) % config.colors.length],
     borderColor: config.borderColors[i % config.borderColors.length],
     icon: config.icons[Math.floor(i * 2.718) % config.icons.length],
     showIcon: (i * 7 + 3) % 10 < 7,
@@ -74,12 +97,7 @@ function buildTileProps(theme: WallTheme): TileProp[] {
   }));
 }
 
-interface WallTileProps {
-  index: number;
-  props: TileProp;
-}
-
-function WallTile({ index, props }: WallTileProps) {
+function WallTile({ index, props }: { index: number; props: TileProp }) {
   return (
     <motion.div
       key={`tile-${index}`}
@@ -91,11 +109,7 @@ function WallTile({ index, props }: WallTileProps) {
         x: props.exitX,
         y: props.exitY,
       }}
-      transition={{
-        duration: 0.38,
-        times: [0, 0.28, 1],
-        ease: ["easeOut", "easeIn"],
-      }}
+      transition={{ duration: 0.38, times: [0, 0.28, 1] }}
       className="w-full h-full rounded-xl relative overflow-hidden select-none"
       style={{
         backgroundColor: props.bgColor,
@@ -115,6 +129,7 @@ function WallTile({ index, props }: WallTileProps) {
   );
 }
 
+// --- Main component ---
 export default function Brush() {
   const [, setLocation] = useLocation();
   const params = useParams();
@@ -128,8 +143,16 @@ export default function Brush() {
   );
 
   const popOrderRef = useRef<number[]>([]);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tilePropsMemo = useRef<TileProp[]>([]);
+
+  // Refs for timer — never trigger re-renders
+  const elapsedMsRef = useRef(0);
+  const revealedCountRef = useRef(0);
+  const lastDisplayedSecondRef = useRef(0);
+  const profileIdRef = useRef<string | undefined>(undefined);
+
+  // Keep profileId ref current
+  profileIdRef.current = profile?.id;
 
   useEffect(() => {
     if (!loaded) return;
@@ -137,6 +160,7 @@ export default function Brush() {
       setLocation("/");
       return;
     }
+    // Shuffle pop order
     const order = Array.from({ length: TOTAL_TILES }, (_, i) => i);
     for (let i = order.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -146,37 +170,61 @@ export default function Brush() {
     tilePropsMemo.current = buildTileProps(profile.theme);
   }, [loaded, profile, setLocation]);
 
+  // Main timer — only re-runs when isBrushing changes
   useEffect(() => {
-    if (isBrushing && timeLeft > 0) {
-      timerRef.current = setTimeout(() => {
-        setTimeLeft((t) => t - 1);
-        const targetHidden = Math.floor(
-          ((TOTAL_TIME - (timeLeft - 1)) / TOTAL_TIME) * TOTAL_TILES
-        );
-        const currentHidden = TOTAL_TILES - visibleTiles.length;
-        if (targetHidden > currentHidden) {
-          const nextToPop = popOrderRef.current[currentHidden];
-          if (nextToPop !== undefined) {
-            setVisibleTiles((prev) => prev.filter((t) => t !== nextToPop));
-          }
-        }
-      }, 1000);
-    } else if (timeLeft === 0 && isBrushing) {
-      setVisibleTiles([]);
-      setTimeout(() => {
-        setLocation(`/celebrate/${profile?.id}`);
-      }, 1500);
-    }
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [isBrushing, timeLeft, visibleTiles.length, profile?.id, setLocation]);
+    if (!isBrushing) return;
 
-  if (!loaded) return (
-    <div className="h-[100dvh] w-full max-w-md mx-auto bg-black flex items-center justify-center">
-      <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-    </div>
-  );
+    // Reset counters when brushing starts
+    elapsedMsRef.current = 0;
+    revealedCountRef.current = 0;
+    lastDisplayedSecondRef.current = 0;
+
+    const interval = setInterval(() => {
+      elapsedMsRef.current += 100;
+      const elapsedSeconds = elapsedMsRef.current / 1000;
+
+      // Update countdown display once per second
+      const displaySecond = Math.floor(elapsedSeconds);
+      if (displaySecond > lastDisplayedSecondRef.current) {
+        lastDisplayedSecondRef.current = displaySecond;
+        const remaining = Math.max(0, TOTAL_TIME - displaySecond);
+        setTimeLeft(remaining);
+      }
+
+      // Check how many tiles should be revealed by now
+      const targetCount = expectedRevealed(elapsedSeconds);
+      if (targetCount > revealedCountRef.current) {
+        const from = revealedCountRef.current;
+        const to = targetCount;
+        revealedCountRef.current = to;
+        // Slice out the indices to pop
+        const toPop = popOrderRef.current.slice(from, to);
+        if (toPop.length > 0) {
+          setVisibleTiles((prev) => prev.filter((t) => !toPop.includes(t)));
+        }
+      }
+
+      // Timer finished
+      if (elapsedSeconds >= TOTAL_TIME) {
+        clearInterval(interval);
+        // Pop any stragglers immediately
+        setVisibleTiles([]);
+        setTimeLeft(0);
+        setTimeout(() => {
+          setLocation(`/celebrate/${profileIdRef.current}`);
+        }, 1200);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isBrushing, setLocation]);
+
+  if (!loaded)
+    return (
+      <div className="h-[100dvh] w-full max-w-md mx-auto bg-black flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
   if (!profile) return null;
 
   const startBrushing = () => setIsBrushing(true);
@@ -193,31 +241,31 @@ export default function Brush() {
 
   const totalIcons = 8;
   const iconsRemaining = Math.ceil((timeLeft / TOTAL_TIME) * totalIcons);
-
-  const revealPercent = ((TOTAL_TILES - visibleTiles.length) / TOTAL_TILES) * 100;
+  const revealPercent = Math.round(
+    ((TOTAL_TILES - visibleTiles.length) / TOTAL_TILES) * 100
+  );
 
   return (
     <div className="h-[100dvh] w-full max-w-md mx-auto bg-black relative overflow-hidden">
-
-      {/* Background Image with shimmer */}
+      {/* Background image with pulsing glow */}
       <div className="absolute inset-0 z-0">
         <img
           src={profile.imageBase64}
           alt="Hidden"
           className="w-full h-full object-cover"
         />
-        {/* Pulsing glow layer that hints at the hidden image */}
         <motion.div
           className="absolute inset-0"
           animate={{ opacity: [0.35, 0.55, 0.35] }}
           transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
           style={{
-            background: "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.4) 100%)",
+            background:
+              "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.4) 100%)",
           }}
         />
       </div>
 
-      {/* Wall Grid — full screen */}
+      {/* Wall grid — full screen */}
       <div className="absolute inset-0 z-10 p-1.5">
         <div
           className="w-full h-full grid gap-1.5"
@@ -236,9 +284,8 @@ export default function Brush() {
         </div>
       </div>
 
-      {/* UI Overlay — sits above tiles */}
+      {/* UI overlay */}
       <div className="absolute inset-0 z-20 flex flex-col justify-between pointer-events-none">
-
         {/* Top bar */}
         <div className="p-4 flex justify-between items-start pointer-events-auto">
           <button
@@ -277,7 +324,7 @@ export default function Brush() {
           )}
         </div>
 
-        {/* Reveal progress hint */}
+        {/* Reveal % badge */}
         {isBrushing && revealPercent > 0 && (
           <div className="absolute top-24 right-4 pointer-events-none">
             <motion.div
@@ -286,7 +333,7 @@ export default function Brush() {
               className="bg-white/90 backdrop-blur-sm rounded-2xl px-3 py-1.5 shadow-lg"
             >
               <span className="text-xs font-black text-primary">
-                {Math.round(revealPercent)}% revealed!
+                {revealPercent}% revealed!
               </span>
             </motion.div>
           </div>
@@ -314,7 +361,9 @@ export default function Brush() {
                 >
                   START BRUSHING! 🦷
                 </motion.button>
-                <p className="text-white/60 font-bold mt-3 text-sm">2 minutes · tiles pop away as you brush!</p>
+                <p className="text-white/60 font-bold mt-3 text-sm">
+                  2 minutes · tiles pop away as you brush!
+                </p>
               </motion.div>
             ) : (
               <motion.div
@@ -326,7 +375,9 @@ export default function Brush() {
                 <h2 className="text-xl font-black text-white mb-1 drop-shadow-md">
                   Keep going, {profile.name}! 💪
                 </h2>
-                <p className="text-white/70 font-semibold text-sm">Brush every tooth!</p>
+                <p className="text-white/70 font-semibold text-sm">
+                  Brush every tooth!
+                </p>
               </motion.div>
             )}
           </AnimatePresence>
