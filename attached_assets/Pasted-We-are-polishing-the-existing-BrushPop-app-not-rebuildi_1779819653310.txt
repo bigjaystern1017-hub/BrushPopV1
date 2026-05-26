@@ -1,0 +1,79 @@
+We are polishing the existing BrushPop app, not rebuilding it.
+
+Current concept:
+BrushPop is a kids tooth-brushing timer where the child brushes for 2 minutes while bubbly “plaque tiles” pop away to reveal a hidden surprise image uploaded by the parent.
+
+Design goal:
+Make the current MVP feel like a polished children’s product: playful, bubbly, colorful, and parent-trustworthy. Keep all existing routes and localStorage logic. Do not add a backend. Do not change the core flow.
+
+Important product metaphor:
+“Pop the plaque. Reveal the prize.”
+
+Visual direction:
+- Bright but polished palette: aqua, mint, bubblegum pink, sunshine yellow, white, soft cream
+- Rounded cards, soft shadows, bubbly/puffy UI
+- Use Outfit font already imported
+- Avoid harsh black overlays except where needed for image readability
+- Add foam/bubble/sparkle motifs using CSS, emoji, or simple divs
+- Keep it buildable in React/Tailwind
+
+Specific changes:
+
+1. KidSelect.tsx
+- Make the home screen feel like a BrushPop welcome screen.
+- Add a friendly logo treatment using text: “BrushPop”
+- Add subtitle: “Pop the plaque. Reveal the prize.”
+- Empty state should feel cheerful, with a big tooth/foam mascot area and a large “Add Kid” button.
+- Profile cards should feel like collectible kid cards, not plain photo cards.
+- Rename Collection button visually as “Rewards” if possible.
+
+2. Setup.tsx
+- Rename user-facing copy:
+  - “Hidden Image” → “Tonight’s Surprise”
+  - “Wall Theme” → “Bubble Cover”
+  - “Surprise Mode” → “Keep it secret”
+  - “Save” → “Create BrushPop” or “Save BrushPop”
+- Make the upload card more charming and parent-friendly.
+- Theme tiles should look like colorful sticker buttons.
+- Keep all existing functionality exactly intact.
+
+3. Brush.tsx
+- Keep the 120 second timer and tile reveal logic.
+- Restyle the tile overlay so the hidden image is covered by rounded, bubbly plaque tiles instead of flat wallpaper squares.
+- Use theme colors/patterns per selected theme, but keep them lightweight.
+- Add a top timer pill with tooth icons and countdown.
+- Add instruction copy:
+  - Before start: “Ready to pop some plaque?”
+  - During brushing: “Keep brushing — the surprise is coming!”
+- Make START BRUSHING button feel big, tactile, and kid-friendly.
+- Keep cancel button.
+- Do not break navigation to /celebrate/:id.
+
+4. Celebrate.tsx
+- Make the celebration screen feel like a reward reveal.
+- Headline: “You popped it!”
+- Subheadline: “Tonight’s surprise is revealed.”
+- Keep streak display but make it a cheerful badge.
+- Button: “Back Home”
+- Keep session-saving behavior, but add a simple guard so the session is not saved twice on accidental double mount.
+
+5. Collection.tsx
+- Rename visible title to “Pop Gallery”
+- Make each completed session look like a collectible card.
+- Keep using the current profile image for now.
+- Add friendly empty state copy: “Finish a brush to unlock your first Pop.”
+
+6. index.css
+- Add reusable utility classes only if useful:
+  - bubbly background gradients
+  - soft card shadows
+  - plaque tile styles
+  - sparkle/foam decorative classes
+- Preserve existing Tailwind/theme setup.
+
+Constraints:
+- Do not introduce new packages.
+- Do not remove existing routes.
+- Do not remove localStorage hooks.
+- Keep TypeScript clean.
+- Keep mobile-first max-width layout.

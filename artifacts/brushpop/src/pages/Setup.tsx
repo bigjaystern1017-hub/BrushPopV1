@@ -6,27 +6,27 @@ import { useProfiles } from "@/lib/useProfiles";
 import { WallTheme, KidProfile } from "@/lib/types";
 import { processImageFile } from "@/lib/imageUtils";
 
-const THEMES: { id: WallTheme; name: string; color: string; icon: string }[] = [
-  { id: "space", name: "Space", color: "#1a1a2e", icon: "🚀" },
-  { id: "jungle", name: "Jungle", color: "#2d6a4f", icon: "🌿" },
-  { id: "underwater", name: "Underwater", color: "#0077b6", icon: "🐟" },
-  { id: "playground", name: "Playground", color: "#e63946", icon: "🎈" },
-  { id: "graffiti", name: "Graffiti", color: "#6c757d", icon: "🎨" },
-  { id: "fantasy", name: "Fantasy", color: "#b0bec5", icon: "🏰" },
+const THEMES: { id: WallTheme; name: string; color: string; icon: string; bg: string }[] = [
+  { id: "space",      name: "Space",      color: "#1a1a2e", icon: "🚀", bg: "linear-gradient(135deg,#1a1a2e,#3a0ca3)" },
+  { id: "jungle",     name: "Jungle",     color: "#2d6a4f", icon: "🌿", bg: "linear-gradient(135deg,#1b4332,#52b788)" },
+  { id: "underwater", name: "Ocean",      color: "#0077b6", icon: "🐠", bg: "linear-gradient(135deg,#03045e,#00b4d8)" },
+  { id: "playground", name: "Playground", color: "#e63946", icon: "🎈", bg: "linear-gradient(135deg,#fb5607,#ffbe0b)" },
+  { id: "graffiti",   name: "Graffiti",   color: "#495057", icon: "🎨", bg: "linear-gradient(135deg,#495057,#adb5bd)" },
+  { id: "fantasy",    name: "Fantasy",    color: "#6a0572", icon: "✨", bg: "linear-gradient(135deg,#6a0572,#c77dff)" },
 ];
 
 export default function Setup() {
   const [, setLocation] = useLocation();
   const params = useParams();
   const isEditing = !!params.id;
-  
+
   const { profiles, saveProfile, deleteProfile, getProfile } = useProfiles();
-  
+
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
   const [theme, setTheme] = useState<WallTheme>("space");
   const [surpriseMode, setSurpriseMode] = useState(false);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -56,15 +56,9 @@ export default function Setup() {
   };
 
   const handleSave = () => {
-    if (!name.trim()) {
-      alert("Please enter a name");
-      return;
-    }
-    if (!image) {
-      alert("Please upload a hidden image");
-      return;
-    }
-    
+    if (!name.trim()) { alert("Please enter a name"); return; }
+    if (!image) { alert("Please upload a surprise image"); return; }
+
     const profile: KidProfile = {
       id: isEditing ? params.id! : crypto.randomUUID(),
       name: name.trim(),
@@ -73,7 +67,7 @@ export default function Setup() {
       surpriseMode,
       createdAt: isEditing ? getProfile(params.id!)!.createdAt : Date.now(),
     };
-    
+
     saveProfile(profile);
     setLocation("/");
   };
@@ -86,115 +80,154 @@ export default function Setup() {
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       className="min-h-screen bg-background max-w-md mx-auto relative flex flex-col"
     >
-      <div className="bg-white p-4 shadow-sm flex items-center justify-between sticky top-0 z-10">
+      {/* Header */}
+      <div className="bg-white px-4 py-3 shadow-sm flex items-center justify-between sticky top-0 z-10">
         <button onClick={() => setLocation("/")} className="p-2 rounded-full hover:bg-muted">
           <ChevronLeft className="w-6 h-6" />
         </button>
-        <h1 className="text-xl font-bold">{isEditing ? "Edit Profile" : "New Kid"}</h1>
-        <div className="w-10"></div>
+        <h1 className="text-lg font-black">{isEditing ? "Edit BrushPop" : "New BrushPop"}</h1>
+        <div className="w-10" />
       </div>
 
       <div className="p-6 flex-1 flex flex-col gap-8">
-        
+
         {/* Name */}
         <div>
-          <label className="block text-sm font-bold text-muted-foreground mb-2 uppercase tracking-wider">Name</label>
-          <input 
-            type="text" 
+          <label className="block text-xs font-black text-muted-foreground mb-2 uppercase tracking-widest">
+            Kid's Name
+          </label>
+          <input
+            type="text"
             value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder="Kid's name"
-            className="w-full text-2xl font-bold border-b-2 border-muted focus:border-primary outline-none bg-transparent py-2 transition-colors"
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter their name…"
+            data-testid="input-name"
+            className="w-full text-2xl font-black border-b-2 border-muted focus:border-primary outline-none bg-transparent py-2 transition-colors placeholder:text-muted/60"
           />
         </div>
 
         {/* Image Upload */}
         <div>
-          <label className="block text-sm font-bold text-muted-foreground mb-2 uppercase tracking-wider">Hidden Image</label>
-          <div 
+          <label className="block text-xs font-black text-muted-foreground mb-2 uppercase tracking-widest">
+            Tonight's Surprise 🎁
+          </label>
+          <div
             onClick={() => fileInputRef.current?.click()}
-            className="w-full aspect-square bg-white rounded-3xl border-4 border-dashed border-muted flex flex-col items-center justify-center overflow-hidden cursor-pointer relative"
+            data-testid="upload-image"
+            className="w-full aspect-square bg-white rounded-3xl border-4 border-dashed border-primary/20 flex flex-col items-center justify-center overflow-hidden cursor-pointer relative hover:border-primary/40 transition-colors"
           >
             {image ? (
               <>
-                <img src={image} alt="Hidden" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                <img src={image} alt="Surprise" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition-opacity gap-2">
                   <Camera className="text-white w-10 h-10" />
+                  <span className="text-white font-bold text-sm">Change photo</span>
                 </div>
               </>
             ) : (
-              <div className="text-muted-foreground flex flex-col items-center gap-3">
-                <div className="p-4 bg-muted rounded-full">
-                  <Upload className="w-8 h-8" />
+              <div className="flex flex-col items-center gap-4 px-8 text-center">
+                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
+                  <Upload className="w-9 h-9 text-primary" />
                 </div>
-                <span className="font-bold">Upload a photo</span>
-                <span className="text-sm px-8 text-center">This will be revealed when they finish brushing!</span>
+                <div>
+                  <p className="font-black text-foreground text-lg">Upload a photo</p>
+                  <p className="text-muted-foreground text-sm mt-1 leading-snug">
+                    This stays hidden until they finish brushing! 🤫
+                  </p>
+                </div>
               </div>
             )}
           </div>
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleImageUpload} 
-            accept="image/*" 
-            className="hidden" 
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageUpload}
+            accept="image/*"
+            className="hidden"
           />
         </div>
 
-        {/* Wall Theme */}
+        {/* Bubble Cover / Theme */}
         <div>
-          <label className="block text-sm font-bold text-muted-foreground mb-2 uppercase tracking-wider">Wall Theme</label>
+          <label className="block text-xs font-black text-muted-foreground mb-3 uppercase tracking-widest">
+            Bubble Cover
+          </label>
           <div className="grid grid-cols-3 gap-3">
-            {THEMES.map(t => (
-              <div 
+            {THEMES.map((t) => (
+              <motion.div
                 key={t.id}
+                whileTap={{ scale: 0.94 }}
                 onClick={() => setTheme(t.id)}
-                className={`rounded-2xl p-3 cursor-pointer border-4 transition-all flex flex-col items-center gap-2 ${theme === t.id ? 'border-primary scale-105 shadow-md' : 'border-transparent bg-white shadow-sm'}`}
+                data-testid={`theme-${t.id}`}
+                className={`rounded-2xl p-3 cursor-pointer border-4 transition-all flex flex-col items-center gap-2 ${
+                  theme === t.id
+                    ? "border-primary shadow-lg scale-105"
+                    : "border-transparent bg-white shadow-sm"
+                }`}
               >
-                <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-inner" style={{ backgroundColor: t.color }}>
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-md"
+                  style={{ background: t.bg }}
+                >
                   {t.icon}
                 </div>
-                <span className="text-xs font-bold">{t.name}</span>
-              </div>
+                <span className="text-xs font-black text-foreground">{t.name}</span>
+                {theme === t.id && (
+                  <span className="text-[10px] font-black text-primary">Selected ✓</span>
+                )}
+              </motion.div>
             ))}
           </div>
         </div>
 
-        {/* Surprise Mode */}
-        <div className="bg-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
-          <div>
-            <h3 className="font-bold">Surprise Mode 🎁</h3>
-            <p className="text-sm text-muted-foreground leading-tight mt-1">Hide the image on the select screen so it's a total surprise.</p>
+        {/* Keep it secret / Surprise Mode */}
+        <div className="bg-white p-4 rounded-2xl shadow-sm flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <h3 className="font-black text-foreground">Keep it secret 🤫</h3>
+            <p className="text-xs text-muted-foreground leading-snug mt-1">
+              Hide the photo preview so it's a complete surprise when they brush.
+            </p>
           </div>
-          <button 
+          <button
             onClick={() => setSurpriseMode(!surpriseMode)}
-            className={`w-14 h-8 rounded-full p-1 transition-colors ${surpriseMode ? 'bg-primary' : 'bg-muted'}`}
+            data-testid="toggle-surprise-mode"
+            className={`w-14 h-8 rounded-full p-1 transition-colors flex-shrink-0 ${
+              surpriseMode ? "bg-primary" : "bg-muted"
+            }`}
           >
-            <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-transform ${surpriseMode ? 'translate-x-6' : 'translate-x-0'}`} />
+            <div
+              className={`w-6 h-6 bg-white rounded-full shadow-md transition-transform ${
+                surpriseMode ? "translate-x-6" : "translate-x-0"
+              }`}
+            />
           </button>
         </div>
 
       </div>
 
-      <div className="p-6 sticky bottom-0 bg-background/80 backdrop-blur-md pb-safe">
-        <button 
+      {/* Save */}
+      <div className="p-6 sticky bottom-0 bg-background/90 backdrop-blur-md pb-8">
+        <motion.button
+          whileTap={{ scale: 0.97 }}
           onClick={handleSave}
-          className="w-full bg-primary text-white text-xl font-bold py-4 rounded-full shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-transform"
+          data-testid="button-save"
+          className="w-full bg-primary text-white text-xl font-black py-5 rounded-full shadow-[0_6px_0_hsl(355,85%,45%)] active:translate-y-1.5 active:shadow-[0_2px_0_hsl(355,85%,45%)] transition-all"
         >
-          Save
-        </button>
+          {isEditing ? "Save Changes" : "Save BrushPop 🎉"}
+        </motion.button>
         {isEditing && (
-          <button 
+          <button
             onClick={handleDelete}
-            className="w-full mt-4 text-destructive font-bold py-2 flex justify-center items-center gap-2"
+            data-testid="button-delete"
+            className="w-full mt-4 text-destructive font-bold py-2 flex justify-center items-center gap-2 text-sm"
           >
-            <Trash2 className="w-5 h-5" /> Delete Profile
+            <Trash2 className="w-4 h-4" /> Delete Profile
           </button>
         )}
       </div>

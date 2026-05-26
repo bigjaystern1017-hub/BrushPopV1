@@ -125,3 +125,27 @@ html, body, #root {
   animation: confettiFall linear forwards;
 }
 
+/* Bubbly card shadow */
+.bubble-card {
+  background: #ffffff;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.05);
+}
+
+/* Soft pastel gradient backgrounds */
+.bg-bubble-aqua   { background: linear-gradient(135deg, #e0f7fa, #b2ebf2); }
+.bg-bubble-mint   { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); }
+.bg-bubble-pink   { background: linear-gradient(135deg, #fce4ec, #f8bbd0); }
+.bg-bubble-yellow { background: linear-gradient(135deg, #fff8e1, #ffecb3); }
+
+/* Plaque tile: wallpaper slices with subtle bubbly feel */
+.plaque-tile {
+  border-radius: 6px;
+  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+/* Safe-area bottom padding */
+.pb-safe {
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+

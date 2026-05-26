@@ -186,6 +186,8 @@ export default function Brush() {
                       backgroundImage: `url(${wallpaperUrl})`,
                       backgroundSize: `${COLS * 100}% ${ROWS * 100}%`,
                       backgroundPosition: `${bgPosX}% ${bgPosY}%`,
+                      borderRadius: "6px",
+                      boxShadow: "inset 0 0 8px rgba(255,255,255,0.2)",
                     }}
                   />
                 )}
@@ -237,7 +239,7 @@ export default function Brush() {
               className="text-center"
             >
               <h2 className="text-3xl font-black text-white mb-6 drop-shadow-md">
-                Ready, {profile.name}?
+                Ready to pop some plaque, {profile.name}?
               </h2>
               <button
                 onClick={startBrushing}
@@ -251,9 +253,9 @@ export default function Brush() {
           ) : (
             <div className="text-center">
               <h2 className="text-xl font-bold text-white mb-2 drop-shadow-md">
-                Keep going, {profile.name}!
+                Keep brushing — the surprise is coming!
               </h2>
-              <p className="text-white/80 font-medium">Brush every tooth!</p>
+              <p className="text-white/80 font-medium">Brush every tooth, {profile.name}! 🦷</p>
             </div>
           )}
         </div>
