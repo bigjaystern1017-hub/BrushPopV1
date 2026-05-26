@@ -47,11 +47,11 @@
 
 :root {
   /* Warm cream background */
-  --background: 40 100% 97%;
-  --foreground: 330 30% 20%;
+  --background: 210 60% 95%;
+  --foreground: 215 30% 20%;
   
-  --border: 35 30% 85%;
-  --input: 35 30% 85%;
+  --border: 210 30% 85%;
+  --input: 210 30% 85%;
   --ring: 355 85% 65%;
 
   /* White-ish cards for contrast */
@@ -72,8 +72,8 @@
   --secondary-foreground: 330 30% 20%;
 
   /* Soft Peach Muted */
-  --muted: 35 40% 92%;
-  --muted-foreground: 35 20% 50%;
+  --muted: 210 40% 92%;
+  --muted-foreground: 210 20% 50%;
 
   /* Vibrant Teal */
   --accent: 180 70% 45%;

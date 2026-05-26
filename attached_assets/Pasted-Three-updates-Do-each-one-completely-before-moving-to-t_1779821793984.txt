@@ -1,0 +1,74 @@
+Three updates. Do each one completely before moving to the next.
+1. Add the BrushPop logo image.
+I am uploading brushpop-logo.png to public/. It is a PNG with a transparent background.
+In KidSelect.tsx, replace the current text-based logo header (the div containing the tooth emoji, "BrushPop" text, and sparkle emoji) with an image tag:
+tsx<div className="w-full text-center pt-10 pb-6 px-6">
+  <img 
+    src="/brushpop-logo.png" 
+    alt="BrushPop" 
+    className="h-20 mx-auto mb-2"
+  />
+  <p className="text-white/70 font-semibold text-sm mt-1">Pop the plaque. Reveal the prize.</p>
+</div>
+2. Change the app background from warm cream/yellow to a soft blue.
+In artifacts/brushpop/src/index.css, change these CSS variables in the :root block:
+Change --background: 40 100% 97%; to --background: 210 60% 95%;
+Change --foreground: 330 30% 20%; to --foreground: 215 30% 20%;
+Change --border: 35 30% 85%; to --border: 210 30% 85%;
+Change --input: 35 30% 85%; to --input: 210 30% 85%;
+Change --muted: 35 40% 92%; to --muted: 210 40% 92%;
+Change --muted-foreground: 35 20% 50%; to --muted-foreground: 210 20% 50%;
+This shifts the entire app from warm cream tones to cool blue tones. Do not change the primary (coral), secondary (golden), or accent (teal) colors — they will contrast nicely against blue.
+Also update the tagline text color in KidSelect.tsx from text-muted-foreground to text-white/70 since it will look better on the blue background. Same for the "WHO'S BRUSHING TONIGHT?" text — change to text-white/60.
+3. Add background music during brushing.
+I am uploading brush-song.mp3 to public/.
+In Brush.tsx, add audio playback that starts when brushing begins and stops when it ends or is cancelled. Add this near the top of the component, after the other refs:
+tsxconst audioRef = useRef<HTMLAudioElement | null>(null);
+const [muted, setMuted] = useState(() => {
+  return localStorage.getItem('brushpop_muted') === 'true';
+});
+Add a useEffect to create the audio element:
+tsxuseEffect(() => {
+  const audio = new Audio('/brush-song.mp3');
+  audio.loop = true;
+  audio.volume = 0.5;
+  audioRef.current = audio;
+  return () => {
+    audio.pause();
+    audio.src = '';
+  };
+}, []);
+In the startBrushing function, after setIsBrushing(true), add:
+tsxif (audioRef.current && !muted) {
+  audioRef.current.currentTime = 0;
+  audioRef.current.play().catch(() => {});
+}
+In the stopTimer function, after clearing the interval, add:
+tsxif (audioRef.current) {
+  audioRef.current.pause();
+  audioRef.current.currentTime = 0;
+}
+Also add it to the timer completion block (inside if (remaining <= 0)) after clearing the interval:
+tsxif (audioRef.current) {
+  audioRef.current.pause();
+}
+Add a mute toggle button in the UI overlay top bar, next to the cancel button:
+tsx<button
+  onClick={() => {
+    const newMuted = !muted;
+    setMuted(newMuted);
+    localStorage.setItem('brushpop_muted', String(newMuted));
+    if (audioRef.current) {
+      if (newMuted) {
+        audioRef.current.pause();
+      } else if (isBrushing) {
+        audioRef.current.play().catch(() => {});
+      }
+    }
+  }}
+  className="p-3 bg-black/30 backdrop-blur-md rounded-full text-white"
+>
+  <span className="text-lg">{muted ? '🔇' : '🔊'}</span>
+</button>
+Place this button on the right side of the top bar (swap the positions so cancel X is left, mute is right).
+Do not change any timer logic, tile pop logic, wallpaper system, or navigation.

@@ -49,6 +49,7 @@ export default function Brush() {
   const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
   const [poppedTiles, setPoppedTiles] = useState<Set<number>>(new Set());
   const [wallpaperLoaded, setWallpaperLoaded] = useState(false);
+  const [muted, setMuted] = useState(() => localStorage.getItem("brushpop_muted") === "true");
 
   // Initialize pop order ONCE on mount — not tied to profile dependency
   const popOrderRef = useRef<number[]>(shuffleArray(TOTAL_TILES));
@@ -56,8 +57,21 @@ export default function Brush() {
   const intervalRef = useRef<number | null>(null);
   const poppedCountRef = useRef<number>(0);
   const navigatedRef = useRef(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const wallpaperUrl = THEME_WALLPAPERS[profile?.theme || "space"] || THEME_WALLPAPERS.space;
+  const wallpaperUrl = THEME_WALLPAPERS[profile?.theme || "blast-off"] || THEME_WALLPAPERS["blast-off"];
+
+  // Set up audio element once on mount
+  useEffect(() => {
+    const audio = new Audio("/brush-song.mp3");
+    audio.loop = true;
+    audio.volume = 0.5;
+    audioRef.current = audio;
+    return () => {
+      audio.pause();
+      audio.src = "";
+    };
+  }, []);
 
   // Preload wallpaper image
   useEffect(() => {
@@ -79,6 +93,10 @@ export default function Brush() {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
   }, []);
 
   const startBrushing = useCallback(() => {
@@ -89,6 +107,10 @@ export default function Brush() {
     setPoppedTiles(new Set());
     setTimeLeft(TOTAL_TIME);
     setIsBrushing(true);
+    if (audioRef.current && !muted) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
     startTimeRef.current = Date.now();
 
     intervalRef.current = window.setInterval(() => {
@@ -100,6 +122,9 @@ export default function Brush() {
       if (remaining <= 0) {
         clearInterval(intervalRef.current!);
         intervalRef.current = null;
+        if (audioRef.current) {
+          audioRef.current.pause();
+        }
         setPoppedTiles(new Set(Array.from({ length: TOTAL_TILES }, (_, i) => i)));
         if (!navigatedRef.current) {
           navigatedRef.current = true;
@@ -206,6 +231,7 @@ export default function Brush() {
       {/* UI Overlay */}
       <div className="absolute inset-0 z-20 flex flex-col justify-between pointer-events-none">
         <div className="p-4 flex justify-between items-start pointer-events-auto">
+          {/* Cancel — left */}
           <button
             onClick={handleCancel}
             className="p-3 bg-black/30 backdrop-blur-md rounded-full text-white"
@@ -214,6 +240,7 @@ export default function Brush() {
             <X className="w-6 h-6" />
           </button>
 
+          {/* Timer pill — centre */}
           {isBrushing && (
             <div className="flex flex-col items-center">
               <div className="bg-black/40 backdrop-blur-md rounded-full py-2 px-4 flex gap-1 mb-2">
@@ -235,6 +262,26 @@ export default function Brush() {
               </div>
             </div>
           )}
+
+          {/* Mute toggle — right */}
+          <button
+            onClick={() => {
+              const newMuted = !muted;
+              setMuted(newMuted);
+              localStorage.setItem("brushpop_muted", String(newMuted));
+              if (audioRef.current) {
+                if (newMuted) {
+                  audioRef.current.pause();
+                } else if (isBrushing) {
+                  audioRef.current.play().catch(() => {});
+                }
+              }
+            }}
+            className="p-3 bg-black/30 backdrop-blur-md rounded-full text-white"
+            data-testid="button-mute"
+          >
+            <span className="text-lg">{muted ? "🔇" : "🔊"}</span>
+          </button>
         </div>
 
         <div className="p-6 pb-safe pointer-events-auto bg-gradient-to-t from-black/80 via-black/40 to-transparent">

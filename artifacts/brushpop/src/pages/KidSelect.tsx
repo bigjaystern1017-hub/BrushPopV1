@@ -40,12 +40,12 @@ export default function KidSelect() {
     >
       {/* Header */}
       <div className="w-full text-center pt-10 pb-6 px-6">
-        <div className="flex items-center justify-center gap-2 mb-1">
-          <span className="text-4xl">🦷</span>
-          <h1 className="text-4xl font-black text-primary tracking-tight">BrushPop</h1>
-          <span className="text-4xl">✨</span>
-        </div>
-        <p className="text-muted-foreground font-semibold text-sm mt-1">Pop the plaque. Reveal the prize.</p>
+        <img
+          src="/brushpop-logo.png"
+          alt="BrushPop"
+          className="h-20 mx-auto mb-2"
+        />
+        <p className="text-white/70 font-semibold text-sm mt-1">Pop the plaque. Reveal the prize.</p>
       </div>
 
       {profiles.length === 0 ? (
