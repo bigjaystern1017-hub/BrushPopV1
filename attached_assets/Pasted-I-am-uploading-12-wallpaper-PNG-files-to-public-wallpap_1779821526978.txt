@@ -1,0 +1,61 @@
+I am uploading 12 wallpaper PNG files to public/wallpapers/. Update the app to use them.
+Step 1: In artifacts/brushpop/src/lib/types.ts, replace the WallTheme type with:
+tsxexport type WallTheme = "blast-off" | "outer-space" | "jungle" | "enchanted-jungle" | "ocean" | "pirates" | "fairy-tale" | "playground" | "skate-park" | "robot-lab" | "sports" | "magical-city";
+Step 2: In artifacts/brushpop/src/pages/Brush.tsx, replace the THEME_WALLPAPERS object with:
+tsxconst THEME_WALLPAPERS: Record<string, string> = {
+  "blast-off": "/wallpapers/blast-off.png",
+  "outer-space": "/wallpapers/outer-space.png",
+  "jungle": "/wallpapers/jungle.png",
+  "enchanted-jungle": "/wallpapers/enchanted-jungle.png",
+  "ocean": "/wallpapers/ocean-explorers.png",
+  "pirates": "/wallpapers/pirates-cove.png",
+  "fairy-tale": "/wallpapers/fairy-tale.png",
+  "playground": "/wallpapers/playground.png",
+  "skate-park": "/wallpapers/skate-park.png",
+  "robot-lab": "/wallpapers/robot-lab.png",
+  "sports": "/wallpapers/sports-fun.png",
+  "magical-city": "/wallpapers/magical-city.png",
+};
+Step 3: In artifacts/brushpop/src/pages/Setup.tsx, replace the entire THEMES array with:
+tsxconst THEMES: { id: WallTheme; name: string; icon: string }[] = [
+  { id: "blast-off", name: "Blast Off", icon: "🚀" },
+  { id: "outer-space", name: "Outer Space", icon: "🪐" },
+  { id: "jungle", name: "Jungle", icon: "🌿" },
+  { id: "enchanted-jungle", name: "Enchanted Jungle", icon: "🌙" },
+  { id: "ocean", name: "Ocean Explorers", icon: "🐠" },
+  { id: "pirates", name: "Pirate's Cove", icon: "🏴‍☠️" },
+  { id: "fairy-tale", name: "Fairy Tale", icon: "🏰" },
+  { id: "playground", name: "Playground", icon: "🎈" },
+  { id: "skate-park", name: "Skate Park", icon: "🛹" },
+  { id: "robot-lab", name: "Robot Lab", icon: "🤖" },
+  { id: "sports", name: "Sports Fun", icon: "⚽" },
+  { id: "magical-city", name: "Magical City", icon: "✨" },
+];
+Step 4: Update the theme selector grid in Setup.tsx. Change grid-cols-3 to grid-cols-4 so 12 themes fit without excessive scrolling. Each theme button should show a small preview thumbnail of the actual wallpaper image instead of just a colored circle. Replace the theme button's inner content:
+tsx{THEMES.map((t) => (
+  <motion.div
+    key={t.id}
+    whileTap={{ scale: 0.94 }}
+    onClick={() => setTheme(t.id)}
+    data-testid={`theme-${t.id}`}
+    className={`rounded-2xl overflow-hidden cursor-pointer border-4 transition-all ${
+      theme === t.id
+        ? "border-primary shadow-lg scale-105"
+        : "border-transparent shadow-sm"
+    }`}
+  >
+    <div
+      className="aspect-square bg-cover bg-center"
+      style={{ backgroundImage: `url(/wallpapers/${t.id === "ocean" ? "ocean-explorers" : t.id === "pirates" ? "pirates-cove" : t.id === "fairy-tale" ? "fairy-tale" : t.id === "sports" ? "sports-fun" : t.id === "magical-city" ? "magical-city" : t.id}.png)` }}
+    />
+    <div className="bg-white px-1 py-1.5 text-center">
+      <span className="text-[10px] font-black text-foreground leading-tight block">{t.icon} {t.name}</span>
+    </div>
+  </motion.div>
+))}
+Step 5: Also update the THEME_COLORS and THEME_ICONS objects in KidSelect.tsx to include all 12 new theme IDs, or remove them and just use a default color/icon for the profile card banner. Simplest approach: replace the theme color banner in the profile cards with a small wallpaper preview strip:
+tsx<div
+  className="h-2 w-full bg-cover bg-center"
+  style={{ backgroundImage: `url(/wallpapers/${profile.theme === "ocean" ? "ocean-explorers" : profile.theme === "pirates" ? "pirates-cove" : profile.theme === "fairy-tale" ? "fairy-tale" : profile.theme === "sports" ? "sports-fun" : profile.theme === "magical-city" ? "magical-city" : profile.theme}.png)` }}
+/>
+Do not change any timer logic, pop animation, navigation, or localStorage behavior.

@@ -3,23 +3,29 @@ import { motion } from "framer-motion";
 import { Plus, Trophy, Settings } from "lucide-react";
 import { useProfiles } from "@/lib/useProfiles";
 
-const THEME_COLORS: Record<string, string> = {
-  space: "#1a1a2e",
-  jungle: "#2d6a4f",
-  underwater: "#0077b6",
-  playground: "#e63946",
-  graffiti: "#495057",
-  fantasy: "#6a0572",
+const THEME_ICONS: Record<string, string> = {
+  "blast-off": "🚀",
+  "outer-space": "🪐",
+  "jungle": "🌿",
+  "enchanted-jungle": "🌙",
+  "ocean": "🐠",
+  "pirates": "🏴‍☠️",
+  "fairy-tale": "🏰",
+  "playground": "🎈",
+  "skate-park": "🛹",
+  "robot-lab": "🤖",
+  "sports": "⚽",
+  "magical-city": "✨",
 };
 
-const THEME_ICONS: Record<string, string> = {
-  space: "🚀",
-  jungle: "🌿",
-  underwater: "🐠",
-  playground: "🎈",
-  graffiti: "🎨",
-  fantasy: "✨",
-};
+function themeWallpaperUrl(id: string): string {
+  const remap: Record<string, string> = {
+    ocean: "ocean-explorers",
+    pirates: "pirates-cove",
+    sports: "sports-fun",
+  };
+  return `/wallpapers/${remap[id] ?? id}.png`;
+}
 
 export default function KidSelect() {
   const { profiles } = useProfiles();
@@ -80,10 +86,10 @@ export default function KidSelect() {
                 className="bg-white rounded-3xl shadow-md overflow-hidden cursor-pointer border-2 border-white hover:border-primary/30 transition-colors"
                 onClick={() => setLocation(`/brush/${profile.id}`)}
               >
-                {/* Theme color banner */}
+                {/* Theme wallpaper banner strip */}
                 <div
-                  className="h-2 w-full"
-                  style={{ backgroundColor: THEME_COLORS[profile.theme] ?? "#888" }}
+                  className="h-2 w-full bg-cover bg-center"
+                  style={{ backgroundImage: `url(${themeWallpaperUrl(profile.theme)})` }}
                 />
 
                 {/* Image / initial */}

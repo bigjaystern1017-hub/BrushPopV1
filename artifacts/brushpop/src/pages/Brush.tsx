@@ -10,12 +10,18 @@ const COLS = 5;
 const TOTAL_TILES = ROWS * COLS;
 
 const THEME_WALLPAPERS: Record<string, string> = {
-  space: "https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=800&q=80",
-  jungle: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80",
-  underwater: "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=800&q=80",
-  playground: "https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=800&q=80",
-  graffiti: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&q=80",
-  fantasy: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&q=80",
+  "blast-off": "/wallpapers/blast-off.png",
+  "outer-space": "/wallpapers/outer-space.png",
+  "jungle": "/wallpapers/jungle.png",
+  "enchanted-jungle": "/wallpapers/enchanted-jungle.png",
+  "ocean": "/wallpapers/ocean-explorers.png",
+  "pirates": "/wallpapers/pirates-cove.png",
+  "fairy-tale": "/wallpapers/fairy-tale.png",
+  "playground": "/wallpapers/playground.png",
+  "skate-park": "/wallpapers/skate-park.png",
+  "robot-lab": "/wallpapers/robot-lab.png",
+  "sports": "/wallpapers/sports-fun.png",
+  "magical-city": "/wallpapers/magical-city.png",
 };
 
 function tileEasing(t: number): number {

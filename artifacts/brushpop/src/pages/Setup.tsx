@@ -6,14 +6,29 @@ import { useProfiles } from "@/lib/useProfiles";
 import { WallTheme, KidProfile } from "@/lib/types";
 import { processImageFile } from "@/lib/imageUtils";
 
-const THEMES: { id: WallTheme; name: string; color: string; icon: string; bg: string }[] = [
-  { id: "space",      name: "Space",      color: "#1a1a2e", icon: "🚀", bg: "linear-gradient(135deg,#1a1a2e,#3a0ca3)" },
-  { id: "jungle",     name: "Jungle",     color: "#2d6a4f", icon: "🌿", bg: "linear-gradient(135deg,#1b4332,#52b788)" },
-  { id: "underwater", name: "Ocean",      color: "#0077b6", icon: "🐠", bg: "linear-gradient(135deg,#03045e,#00b4d8)" },
-  { id: "playground", name: "Playground", color: "#e63946", icon: "🎈", bg: "linear-gradient(135deg,#fb5607,#ffbe0b)" },
-  { id: "graffiti",   name: "Graffiti",   color: "#495057", icon: "🎨", bg: "linear-gradient(135deg,#495057,#adb5bd)" },
-  { id: "fantasy",    name: "Fantasy",    color: "#6a0572", icon: "✨", bg: "linear-gradient(135deg,#6a0572,#c77dff)" },
+const THEMES: { id: WallTheme; name: string; icon: string }[] = [
+  { id: "blast-off",        name: "Blast Off",       icon: "🚀" },
+  { id: "outer-space",      name: "Outer Space",     icon: "🪐" },
+  { id: "jungle",           name: "Jungle",          icon: "🌿" },
+  { id: "enchanted-jungle", name: "Enchanted Jungle",icon: "🌙" },
+  { id: "ocean",            name: "Ocean Explorers", icon: "🐠" },
+  { id: "pirates",          name: "Pirate's Cove",   icon: "🏴‍☠️" },
+  { id: "fairy-tale",       name: "Fairy Tale",      icon: "🏰" },
+  { id: "playground",       name: "Playground",      icon: "🎈" },
+  { id: "skate-park",       name: "Skate Park",      icon: "🛹" },
+  { id: "robot-lab",        name: "Robot Lab",       icon: "🤖" },
+  { id: "sports",           name: "Sports Fun",      icon: "⚽" },
+  { id: "magical-city",     name: "Magical City",    icon: "✨" },
 ];
+
+function themeWallpaperUrl(id: string): string {
+  const remap: Record<string, string> = {
+    ocean: "ocean-explorers",
+    pirates: "pirates-cove",
+    sports: "sports-fun",
+  };
+  return `/wallpapers/${remap[id] ?? id}.png`;
+}
 
 export default function Setup() {
   const [, setLocation] = useLocation();
@@ -24,7 +39,7 @@ export default function Setup() {
 
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
-  const [theme, setTheme] = useState<WallTheme>("space");
+  const [theme, setTheme] = useState<WallTheme>("blast-off");
   const [surpriseMode, setSurpriseMode] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -158,29 +173,28 @@ export default function Setup() {
           <label className="block text-xs font-black text-muted-foreground mb-3 uppercase tracking-widest">
             Bubble Cover
           </label>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             {THEMES.map((t) => (
               <motion.div
                 key={t.id}
                 whileTap={{ scale: 0.94 }}
                 onClick={() => setTheme(t.id)}
                 data-testid={`theme-${t.id}`}
-                className={`rounded-2xl p-3 cursor-pointer border-4 transition-all flex flex-col items-center gap-2 ${
+                className={`rounded-2xl overflow-hidden cursor-pointer border-4 transition-all ${
                   theme === t.id
                     ? "border-primary shadow-lg scale-105"
-                    : "border-transparent bg-white shadow-sm"
+                    : "border-transparent shadow-sm"
                 }`}
               >
                 <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-md"
-                  style={{ background: t.bg }}
-                >
-                  {t.icon}
+                  className="aspect-square bg-cover bg-center"
+                  style={{ backgroundImage: `url(${themeWallpaperUrl(t.id)})` }}
+                />
+                <div className="bg-white px-1 py-1.5 text-center">
+                  <span className="text-[10px] font-black text-foreground leading-tight block">
+                    {t.icon} {t.name}
+                  </span>
                 </div>
-                <span className="text-xs font-black text-foreground">{t.name}</span>
-                {theme === t.id && (
-                  <span className="text-[10px] font-black text-primary">Selected ✓</span>
-                )}
               </motion.div>
             ))}
           </div>
