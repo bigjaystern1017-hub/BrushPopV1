@@ -7,12 +7,12 @@ import { WallTheme, KidProfile } from "@/lib/types";
 import { processImageFile } from "@/lib/imageUtils";
 
 const THEMES: { id: WallTheme; name: string; color: string; icon: string; bg: string }[] = [
-  { id: "space",      name: "Space",      color: "#1a1a2e", icon: "🚀", bg: "linear-gradient(135deg,#1a1a2e,#3a0ca3)" },
-  { id: "jungle",     name: "Jungle",     color: "#2d6a4f", icon: "🌿", bg: "linear-gradient(135deg,#1b4332,#52b788)" },
-  { id: "underwater", name: "Ocean",      color: "#0077b6", icon: "🐠", bg: "linear-gradient(135deg,#03045e,#00b4d8)" },
-  { id: "playground", name: "Playground", color: "#e63946", icon: "🎈", bg: "linear-gradient(135deg,#fb5607,#ffbe0b)" },
-  { id: "graffiti",   name: "Graffiti",   color: "#495057", icon: "🎨", bg: "linear-gradient(135deg,#495057,#adb5bd)" },
-  { id: "fantasy",    name: "Fantasy",    color: "#6a0572", icon: "✨", bg: "linear-gradient(135deg,#6a0572,#c77dff)" },
+  { id: "space",        name: "Blast Off",    color: "#1a1a2e", icon: "🚀", bg: "linear-gradient(135deg,#1a1a2e,#3a0ca3)" },
+  { id: "robot-lab",    name: "Robot Lab",    color: "#2d4a7a", icon: "🤖", bg: "linear-gradient(135deg,#1d3461,#4e89c5)" },
+  { id: "magical-city", name: "Magical City", color: "#6a0572", icon: "🏰", bg: "linear-gradient(135deg,#6a0572,#c77dff)" },
+  { id: "skate-park",   name: "Skate Park",   color: "#7b2d8b", icon: "🛹", bg: "linear-gradient(135deg,#f77f00,#d62828)" },
+  { id: "sports",       name: "Sports Fun",   color: "#e07b00", icon: "⚽", bg: "linear-gradient(135deg,#e07b00,#ffd60a)" },
+  { id: "fantasy",      name: "Magical City", color: "#4a1080", icon: "🌙", bg: "linear-gradient(135deg,#4a1080,#9d4edd)" },
 ];
 
 export default function Setup() {

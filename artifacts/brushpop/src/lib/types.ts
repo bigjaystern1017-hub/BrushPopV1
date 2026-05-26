@@ -1,4 +1,4 @@
-export type WallTheme = "space" | "jungle" | "underwater" | "playground" | "graffiti" | "fantasy";
+export type WallTheme = "space" | "robot-lab" | "magical-city" | "skate-park" | "sports" | "fantasy";
 
 export interface KidProfile {
   id: string;          // crypto.randomUUID()

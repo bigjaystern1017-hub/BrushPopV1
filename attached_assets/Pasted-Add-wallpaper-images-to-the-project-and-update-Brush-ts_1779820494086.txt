@@ -1,0 +1,43 @@
+Add wallpaper images to the project and update Brush.tsx to use them.
+Step 1: Create a folder public/wallpapers/ in the project root.
+Step 2: I will manually upload the following 5 PNG files into public/wallpapers/:
+
+blast-off.png
+magical-city.png
+skate-park.png
+robot-lab.png
+sports-fun.png
+
+Step 3: In Brush.tsx, update the THEME_WALLPAPERS object to use local paths instead of Unsplash URLs:
+tsxconst THEME_WALLPAPERS: Record<string, string> = {
+  space: "/wallpapers/blast-off.png",
+  jungle: "/wallpapers/robot-lab.png",
+  underwater: "/wallpapers/magical-city.png",
+  playground: "/wallpapers/sports-fun.png",
+  graffiti: "/wallpapers/skate-park.png",
+  fantasy: "/wallpapers/magical-city.png",
+};
+Step 4: Also update the theme names and labels throughout the app to match the actual wallpapers. In types.ts, change the WallTheme type:
+tsxexport type WallTheme = "space" | "robot-lab" | "magical-city" | "skate-park" | "sports" | "fantasy";
+And update the theme selector in Setup.tsx so the labels shown to the user match the wallpapers:
+
+"space" → label "Blast Off 🚀"
+"robot-lab" → label "Robot Lab 🤖"
+"magical-city" → label "Magical City 🏰"
+"skate-park" → label "Skate Park 🛹"
+"sports" → label "Sports Fun ⚽"
+"fantasy" → label "Magical City 🌙" (uses same wallpaper for now)
+
+Update the THEME_WALLPAPERS mapping accordingly:
+tsxconst THEME_WALLPAPERS: Record<string, string> = {
+  space: "/wallpapers/blast-off.png",
+  "robot-lab": "/wallpapers/robot-lab.png",
+  "magical-city": "/wallpapers/magical-city.png",
+  "skate-park": "/wallpapers/skate-park.png",
+  sports: "/wallpapers/sports-fun.png",
+  fantasy: "/wallpapers/magical-city.png",
+};
+Step 5: IMPORTANT — image optimization. These PNGs may be large. After I upload them, run this in the Replit shell to resize them to a reasonable size for mobile (800px wide, maintain aspect ratio):
+bashnpx sharp-cli --input public/wallpapers/*.png --output public/wallpapers/ --resize 800
+If sharp-cli isn't available, the images will work as-is but may load slowly on mobile. I can optimize them separately if needed.
+Do not change any timer logic, pop animation logic, or navigation. Only change the wallpaper URLs and theme names/labels.
