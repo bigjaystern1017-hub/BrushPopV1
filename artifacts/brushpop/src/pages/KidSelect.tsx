@@ -39,13 +39,13 @@ export default function KidSelect() {
       className="min-h-screen bg-background flex flex-col items-center max-w-md mx-auto"
     >
       {/* Header */}
-      <div className="w-full text-center pt-10 pb-6 px-6">
+      <div className="w-full text-center pt-10 pb-8 px-6">
         <img
           src="/brushpop-logo.png"
           alt="BrushPop"
-          className="h-20 mx-auto mb-2"
+          className="h-36 mx-auto mb-2 drop-shadow-lg"
         />
-        <p className="text-white/70 font-semibold text-sm mt-1">Pop the plaque. Reveal the prize.</p>
+        <p className="text-foreground/60 font-bold text-base mt-1">Pop the plaque. Reveal the prize.</p>
       </div>
 
       {profiles.length === 0 ? (
