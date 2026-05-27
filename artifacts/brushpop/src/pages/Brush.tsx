@@ -7,51 +7,33 @@ import { useProfiles } from "@/lib/useProfiles";
 const TOTAL_TIME = 120;
 const BUBBLE_COUNT = 160;
 
-// Generate a fixed set of bubble positions that overlap enough to cover the screen
 function generateBubbles(count: number): { id: number; x: number; y: number; size: number; hue: number; delay: number }[] {
   const bubbles: { id: number; x: number; y: number; size: number; hue: number; delay: number }[] = [];
-  
-  // First pass: grid-based placement to ensure full coverage
   const gridCols = 10;
   const gridRows = 16;
   for (let row = 0; row < gridRows; row++) {
     for (let col = 0; col < gridCols; col++) {
       const id = bubbles.length;
-      // Offset every other row for honeycomb-like packing
       const xOffset = row % 2 === 0 ? 0 : (100 / gridCols) / 2;
       bubbles.push({
         id,
         x: (col / gridCols) * 100 + xOffset + (Math.random() - 0.5) * 3,
         y: (row / gridRows) * 100 + (Math.random() - 0.5) * 2,
-        size: Math.max(13, 14 + (Math.random() - 0.5) * 4), // % of viewport width
-        hue: 195 + Math.random() * 20, // blue range matching BrushPop brand
+        size: Math.max(13, 14 + (Math.random() - 0.5) * 4),
+        hue: 195 + Math.random() * 20,
         delay: Math.random() * 0.15,
       });
     }
   }
-
   return bubbles.slice(0, count);
 }
 
 function tileEasing(t: number): number {
-  // Base linear progress ensures something is ALWAYS happening
   const base = t;
-  
-  // Layer multiple sine waves at different frequencies to create
-  // unpredictable speed changes — fast bursts then slow anticipation
-  // Wave 1: slow pulse (2 full cycles over the timer)
   const wave1 = Math.sin(t * Math.PI * 4) * 0.04;
-  // Wave 2: medium pulse (5 cycles) — this creates the main fast/slow feel
   const wave2 = Math.sin(t * Math.PI * 10) * 0.06;
-  // Wave 3: fast flutter (8 cycles) — adds unpredictability
   const wave3 = Math.sin(t * Math.PI * 16 + 0.5) * 0.025;
-  
-  // Combine: base progress + wave modulations
-  // The waves speed up and slow down the reveal rate without ever stopping
   const result = base + wave1 + wave2 + wave3;
-  
-  // Clamp between 0 and 1, and ensure it never goes backward
-  // (monotonically increasing — bubbles never "un-pop")
   return Math.max(0, Math.min(1, result));
 }
 
@@ -73,9 +55,14 @@ export default function Brush() {
   const [isBrushing, setIsBrushing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
   const [poppedBubbles, setPoppedBubbles] = useState<Set<number>>(new Set());
-  const [muted, setMuted] = useState(() => localStorage.getItem("brushpop_muted") === "true");
+  const [muted, setMuted] = useState(false);
 
-  // Generate bubbles once and memoize
+  // Sync muted preference from localStorage after mount
+  useEffect(() => {
+    const stored = localStorage.getItem("brushpop_muted");
+    if (stored === "true") setMuted(true);
+  }, []);
+
   const bubbles = useMemo(() => generateBubbles(BUBBLE_COUNT), []);
 
   const popOrderRef = useRef<number[]>(shuffleArray(BUBBLE_COUNT));
@@ -84,19 +71,6 @@ export default function Brush() {
   const poppedCountRef = useRef<number>(0);
   const navigatedRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  // iOS Safari fix: don't create audio in useEffect.
-  // Instead, create and prime it on first user tap.
-  const audioCreatedRef = useRef(false);
-  const ensureAudio = useCallback(() => {
-    if (!audioCreatedRef.current) {
-      const audio = new Audio("/brush-song-v2.mp3");
-      audio.loop = false;
-      audio.volume = 0.5;
-      audioRef.current = audio;
-      audioCreatedRef.current = true;
-    }
-  }, []);
 
   useEffect(() => {
     if (loaded && !profile) setLocation("/");
@@ -111,9 +85,6 @@ export default function Brush() {
   }, []);
 
   const startBrushing = useCallback(() => {
-    // Create audio on this direct tap event for iOS compatibility
-    ensureAudio();
-
     popOrderRef.current = shuffleArray(BUBBLE_COUNT);
     poppedCountRef.current = 0;
     navigatedRef.current = false;
@@ -121,11 +92,22 @@ export default function Brush() {
     setTimeLeft(TOTAL_TIME);
     setIsBrushing(true);
 
-    // Play audio immediately in this tap handler call stack
-    if (audioRef.current && !muted) {
-      audioRef.current.currentTime = 0;
-      const playPromise = audioRef.current.play();
-      if (playPromise) playPromise.catch(() => {});
+    // Audio: create AND play in the same synchronous tap handler for iOS
+    if (!muted) {
+      try {
+        // Always create a fresh Audio object on each start for iOS reliability
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.src = "";
+        }
+        const audio = new Audio("/brush-song-v2.mp3");
+        audio.volume = 0.5;
+        audio.loop = false;
+        audioRef.current = audio;
+        audio.play().catch((err) => console.warn("Audio play failed:", err));
+      } catch (e) {
+        console.warn("Audio creation failed:", e);
+      }
     }
 
     startTimeRef.current = Date.now();
@@ -160,7 +142,7 @@ export default function Brush() {
         setPoppedBubbles(newPopped);
       }
     }, 100);
-  }, [params.id, setLocation, muted, ensureAudio]);
+  }, [params.id, setLocation, muted]);
 
   useEffect(() => {
     return () => {

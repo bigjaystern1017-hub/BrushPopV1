@@ -1,0 +1,98 @@
+Fix audio not playing on mobile. Multiple issues to address.
+1. Check and clear mute state. In Brush.tsx, temporarily add a console.log to debug. Find the ensureAudio callback and add a log right after the audio is created:
+Actually skip the debug — just force-fix it. In Brush.tsx, change the muted initial state from:
+tsxconst [muted, setMuted] = useState(() => localStorage.getItem("brushpop_muted") === "true");
+to:
+tsxconst [muted, setMuted] = useState(false);
+And add a useEffect right after it to sync with localStorage:
+tsxuseEffect(() => {
+  const stored = localStorage.getItem("brushpop_muted");
+  if (stored === "true") setMuted(true);
+}, []);
+This ensures the component renders with muted=false first (so the first tap always tries to play), then syncs the stored preference after mount.
+2. iOS audio unlock pattern. The current ensureAudio approach may still fail because iOS needs the very first interaction with an Audio object to be a .play() call within a tap handler. Change the approach — instead of creating and playing separately, do both in one shot.
+Replace the ensureAudio callback and the audio play section in startBrushing with this combined approach. Find everything from const audioCreatedRef through the end of startBrushing and replace with:
+tsxconst startBrushing = useCallback(() => {
+  popOrderRef.current = shuffleArray(BUBBLE_COUNT);
+  poppedCountRef.current = 0;
+  navigatedRef.current = false;
+  setPoppedBubbles(new Set());
+  setTimeLeft(TOTAL_TIME);
+  setIsBrushing(true);
+
+  // Audio: create AND play in the same synchronous tap handler for iOS
+  if (!muted) {
+    try {
+      // Always create a fresh Audio object on each start for iOS reliability
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
+      const audio = new Audio("/brush-song-v2.mp3");
+      audio.volume = 0.5;
+      audio.loop = false;
+      audioRef.current = audio;
+      audio.play().catch((err) => console.warn("Audio play failed:", err));
+    } catch (e) {
+      console.warn("Audio creation failed:", e);
+    }
+  }
+
+  startTimeRef.current = Date.now();
+
+  intervalRef.current = window.setInterval(() => {
+    const elapsed = (Date.now() - startTimeRef.current) / 1000;
+    const remaining = Math.max(0, TOTAL_TIME - elapsed);
+    setTimeLeft(Math.ceil(remaining));
+
+    if (remaining <= 0) {
+      clearInterval(intervalRef.current!);
+      intervalRef.current = null;
+      if (audioRef.current) audioRef.current.pause();
+      setPoppedBubbles(new Set(Array.from({ length: BUBBLE_COUNT }, (_, i) => i)));
+      if (!navigatedRef.current) {
+        navigatedRef.current = true;
+        setTimeout(() => setLocation(`/celebrate/${params.id}`), 1500);
+      }
+      return;
+    }
+
+    const linearProgress = elapsed / TOTAL_TIME;
+    const easedProgress = tileEasing(linearProgress);
+    const targetPopped = Math.min(BUBBLE_COUNT, Math.floor(easedProgress * BUBBLE_COUNT));
+
+    if (targetPopped > poppedCountRef.current) {
+      const newPopped = new Set<number>();
+      for (let i = 0; i < targetPopped; i++) {
+        newPopped.add(popOrderRef.current[i]);
+      }
+      poppedCountRef.current = targetPopped;
+      setPoppedBubbles(newPopped);
+    }
+  }, 100);
+}, [params.id, setLocation, muted]);
+Remove the audioCreatedRef and ensureAudio callback entirely — they are no longer needed.
+3. Update the mute toggle to also pause/resume the current audio instance. The existing mute toggle code should still work but make sure it references audioRef.current correctly.
+4. Delete the old audio file. In the Replit shell, run:
+rm public/brush-song.mp3
+This removes the old short version so nothing can accidentally reference it.
+5. Fanfare on celebrate screen — simplify. The fanfare plays inside a useEffect which iOS will block. Since it's a short sound effect, the simplest reliable approach is to play it when the user taps the screen. Replace the fanfare useEffect code. Remove the try/catch that creates and plays the fanfare inside the session-saving block. Instead, add an onClick handler to the outer motion.div of the celebrate screen that plays the fanfare once:
+In Celebrate.tsx, add a ref:
+tsxconst fanfarePlayedRef = useRef(false);
+Add a function:
+tsxconst playFanfare = () => {
+  if (!fanfarePlayedRef.current) {
+    fanfarePlayedRef.current = true;
+    try {
+      const fanfare = new Audio("/fanfare.mp3");
+      fanfare.volume = 0.7;
+      fanfareRef.current = fanfare;
+      fanfare.play().catch(() => {});
+    } catch {}
+  }
+};
+On the outer <motion.div> of the celebrate screen, add:
+tsxonClick={playFanfare}
+onTouchStart={playFanfare}
+Remove the fanfare play code from inside the useEffect (the try/catch block that creates the Audio and plays it). Keep the session-saving code. Remove fanfareFailedRef entirely. Remove the fanfare play from the "Back Home" button's onClick.
+Do not change bubble logic, timer easing, or any visual elements.

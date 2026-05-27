@@ -15,7 +15,7 @@ export default function Celebrate() {
   const [streak, setStreak] = useState(0);
   const sessionSavedRef = useRef(false);
   const fanfareRef = useRef<HTMLAudioElement | null>(null);
-  const fanfareFailedRef = useRef(false);
+  const fanfarePlayedRef = useRef(false);
 
   useEffect(() => {
     if (!loaded) return;
@@ -37,13 +37,6 @@ export default function Celebrate() {
       setTimeout(() => {
         setStreak(getStreak(profile.id));
       }, 100);
-      // Play celebration fanfare
-      try {
-        const fanfare = new Audio("/fanfare.mp3");
-        fanfare.volume = 0.7;
-        fanfareRef.current = fanfare;
-        fanfare.play().catch(() => { fanfareFailedRef.current = true; });
-      } catch {}
     }
 
     return () => {
@@ -53,6 +46,19 @@ export default function Celebrate() {
       }
     };
   }, [loaded, profile?.id]);
+
+  // Play fanfare on first tap anywhere on the screen (iOS-safe)
+  const playFanfare = () => {
+    if (!fanfarePlayedRef.current) {
+      fanfarePlayedRef.current = true;
+      try {
+        const fanfare = new Audio("/fanfare.mp3");
+        fanfare.volume = 0.7;
+        fanfareRef.current = fanfare;
+        fanfare.play().catch(() => {});
+      } catch {}
+    }
+  };
 
   if (!loaded)
     return (
@@ -66,6 +72,8 @@ export default function Celebrate() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      onClick={playFanfare}
+      onTouchStart={playFanfare}
       className="min-h-screen bg-transparent max-w-md mx-auto relative flex flex-col items-center justify-center p-6 overflow-hidden"
     >
       {/* Confetti */}
@@ -149,12 +157,7 @@ export default function Celebrate() {
         {/* Done button */}
         <motion.button
           whileTap={{ scale: 0.96 }}
-          onClick={() => {
-            if (fanfareFailedRef.current && fanfareRef.current) {
-              fanfareRef.current.play().catch(() => {});
-            }
-            setLocation("/");
-          }}
+          onClick={() => setLocation("/")}
           data-testid="button-done"
           className="bg-secondary text-secondary-foreground text-2xl font-black py-5 rounded-full shadow-[0_6px_0_hsl(45,95%,40%)] active:translate-y-1.5 active:shadow-[0_2px_0_hsl(45,95%,40%)] transition-all w-full"
         >
