@@ -146,11 +146,6 @@ export default function Brush() {
           // the already-unlocked element avoids the restriction
           if (audioRef.current) {
             audioRef.current.pause();
-            audioRef.current.src = "/fanfare.m4a";
-            audioRef.current.loop = false;
-            audioRef.current.volume = 0.8;
-            audioRef.current.currentTime = 0;
-            audioRef.current.play().catch(() => {});
           }
           setTimeout(() => setLocation(`/celebrate/${params.id}`), 1500);
         }

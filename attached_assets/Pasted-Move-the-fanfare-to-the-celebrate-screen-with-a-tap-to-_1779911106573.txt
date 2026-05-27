@@ -1,4 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+Move the fanfare to the celebrate screen with a tap-to-trigger approach.
+1. In Brush.tsx, revert the fanfare from the timer completion. Find the completion block and change it back to just stopping the song — no fanfare swap. Replace:
+tsx          if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.src = "/fanfare.m4a";
+            audioRef.current.loop = false;
+            audioRef.current.volume = 0.8;
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch(() => {});
+          }
+With just:
+tsx          if (audioRef.current) {
+            audioRef.current.pause();
+          }
+2. In Celebrate.tsx, replace the ENTIRE file with this:
+tsximport { useEffect, useRef, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { motion } from "framer-motion";
 import { useProfiles } from "@/lib/useProfiles";
@@ -159,7 +174,7 @@ export default function Celebrate() {
               <p className="text-foreground font-black text-base">
                 {CLINIC.name}
               </p>
-              <a
+              
                 href={CLINIC.bookingUrl}
                 className="inline-block mt-3 bg-accent text-white font-bold text-sm py-2 px-6 rounded-full shadow-md active:scale-95 transition-transform"
               >
@@ -181,3 +196,4 @@ export default function Celebrate() {
     </motion.div>
   );
 }
+Do not change any other files.
