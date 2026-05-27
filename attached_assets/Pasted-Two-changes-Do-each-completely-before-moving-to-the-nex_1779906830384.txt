@@ -1,0 +1,108 @@
+Two changes. Do each completely before moving to the next.
+1. Remove the wallpaper theme selector from Setup.tsx since we now use bubbles.
+In artifacts/brushpop/src/pages/Setup.tsx, make these changes:
+Delete the entire THEMES array (lines 9-22).
+Delete the themeWallpaperUrl function (lines 24-31).
+Remove the WallTheme import from the import statement on line 6. Change:
+tsximport { WallTheme, KidProfile } from "@/lib/types";
+to:
+tsximport { KidProfile } from "@/lib/types";
+Remove the theme state. Delete this line:
+tsxconst [theme, setTheme] = useState<WallTheme>("blast-off");
+In the useEffect that loads an existing profile for editing, delete this line:
+tsxsetTheme(profile.theme);
+In the handleSave function, hardcode the theme in the profile object. Change:
+tsxtheme,
+to:
+tsxtheme: "blast-off" as any,
+Delete the entire "Bubble Cover / Theme" section from the JSX — that's the <div> containing the label "Bubble Cover" and the grid of theme buttons (everything from {/* Bubble Cover / Theme */} through its closing </div>, roughly lines 171-200).
+2. Fix audio not playing on iOS Safari.
+The problem is iOS requires audio .play() to happen in the direct synchronous call stack of a user tap event. Creating the Audio object in a useEffect and playing it later breaks this on iOS.
+In artifacts/brushpop/src/pages/Brush.tsx, make these changes:
+Replace the audio useEffect (lines 88-94) with this:
+tsx// iOS Safari fix: don't create audio in useEffect.
+// Instead, create and prime it on first user tap.
+const audioCreatedRef = useRef(false);
+const ensureAudio = useCallback(() => {
+  if (!audioCreatedRef.current) {
+    const audio = new Audio("/brush-song-v2.mp3");
+    audio.loop = false;
+    audio.volume = 0.5;
+    audioRef.current = audio;
+    audioCreatedRef.current = true;
+  }
+}, []);
+Replace the startBrushing function (the entire useCallback) with:
+tsxconst startBrushing = useCallback(() => {
+  // Create audio on this direct tap event for iOS compatibility
+  ensureAudio();
+  
+  popOrderRef.current = shuffleArray(BUBBLE_COUNT);
+  poppedCountRef.current = 0;
+  navigatedRef.current = false;
+  setPoppedBubbles(new Set());
+  setTimeLeft(TOTAL_TIME);
+  setIsBrushing(true);
+  
+  // Play audio immediately in this tap handler call stack
+  if (audioRef.current && !muted) {
+    audioRef.current.currentTime = 0;
+    const playPromise = audioRef.current.play();
+    if (playPromise) playPromise.catch(() => {});
+  }
+  
+  startTimeRef.current = Date.now();
+
+  intervalRef.current = window.setInterval(() => {
+    const elapsed = (Date.now() - startTimeRef.current) / 1000;
+    const remaining = Math.max(0, TOTAL_TIME - elapsed);
+    setTimeLeft(Math.ceil(remaining));
+
+    if (remaining <= 0) {
+      clearInterval(intervalRef.current!);
+      intervalRef.current = null;
+      if (audioRef.current) audioRef.current.pause();
+      setPoppedBubbles(new Set(Array.from({ length: BUBBLE_COUNT }, (_, i) => i)));
+      if (!navigatedRef.current) {
+        navigatedRef.current = true;
+        setTimeout(() => setLocation(`/celebrate/${params.id}`), 1500);
+      }
+      return;
+    }
+
+    const linearProgress = elapsed / TOTAL_TIME;
+    const easedProgress = tileEasing(linearProgress);
+    const targetPopped = Math.min(BUBBLE_COUNT, Math.floor(easedProgress * BUBBLE_COUNT));
+
+    if (targetPopped > poppedCountRef.current) {
+      const newPopped = new Set<number>();
+      for (let i = 0; i < targetPopped; i++) {
+        newPopped.add(popOrderRef.current[i]);
+      }
+      poppedCountRef.current = targetPopped;
+      setPoppedBubbles(newPopped);
+    }
+  }, 100);
+}, [params.id, setLocation, muted, ensureAudio]);
+Update the cleanup useEffect to handle the case where audio may not exist:
+tsxuseEffect(() => {
+  return () => {
+    stopTimer();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+    }
+  };
+}, [stopTimer]);
+Same fix for fanfare in Celebrate.tsx. The fanfare currently creates and plays audio inside a useEffect, which iOS will also block. Change the celebrate screen so the fanfare plays on a user interaction instead — the simplest approach is to autoplay it but also add a fallback: if autoplay fails, play it when the user taps "Back Home".
+In Celebrate.tsx, find the fanfare play code inside the useEffect and wrap the catch to store a flag:
+tsxconst fanfareFailedRef = useRef(false);
+In the useEffect where fanfare plays, change:
+tsxfanfare.play().catch(() => {});
+to:
+tsxfanfare.play().catch(() => { fanfareFailedRef.current = true; });
+Then on the "Back Home" button's onClick, add before the navigation:
+tsxif (fanfareFailedRef.current && fanfareRef.current) {
+  fanfareRef.current.play().catch(() => {});
+}
+Do not change bubble logic, timer logic, navigation, or any other files.

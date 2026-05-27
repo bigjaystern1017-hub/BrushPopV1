@@ -15,6 +15,7 @@ export default function Celebrate() {
   const [streak, setStreak] = useState(0);
   const sessionSavedRef = useRef(false);
   const fanfareRef = useRef<HTMLAudioElement | null>(null);
+  const fanfareFailedRef = useRef(false);
 
   useEffect(() => {
     if (!loaded) return;
@@ -41,7 +42,7 @@ export default function Celebrate() {
         const fanfare = new Audio("/fanfare.mp3");
         fanfare.volume = 0.7;
         fanfareRef.current = fanfare;
-        fanfare.play().catch(() => {});
+        fanfare.play().catch(() => { fanfareFailedRef.current = true; });
       } catch {}
     }
 
@@ -148,7 +149,12 @@ export default function Celebrate() {
         {/* Done button */}
         <motion.button
           whileTap={{ scale: 0.96 }}
-          onClick={() => setLocation("/")}
+          onClick={() => {
+            if (fanfareFailedRef.current && fanfareRef.current) {
+              fanfareRef.current.play().catch(() => {});
+            }
+            setLocation("/");
+          }}
           data-testid="button-done"
           className="bg-secondary text-secondary-foreground text-2xl font-black py-5 rounded-full shadow-[0_6px_0_hsl(45,95%,40%)] active:translate-y-1.5 active:shadow-[0_2px_0_hsl(45,95%,40%)] transition-all w-full"
         >

@@ -3,32 +3,8 @@ import { useLocation, useParams } from "wouter";
 import { motion } from "framer-motion";
 import { ChevronLeft, Camera, Upload, Trash2 } from "lucide-react";
 import { useProfiles } from "@/lib/useProfiles";
-import { WallTheme, KidProfile } from "@/lib/types";
+import { KidProfile } from "@/lib/types";
 import { processImageFile } from "@/lib/imageUtils";
-
-const THEMES: { id: WallTheme; name: string; icon: string }[] = [
-  { id: "blast-off",        name: "Blast Off",       icon: "🚀" },
-  { id: "outer-space",      name: "Outer Space",     icon: "🪐" },
-  { id: "jungle",           name: "Jungle",          icon: "🌿" },
-  { id: "enchanted-jungle", name: "Enchanted Jungle",icon: "🌙" },
-  { id: "ocean",            name: "Ocean Explorers", icon: "🐠" },
-  { id: "pirates",          name: "Pirate's Cove",   icon: "🏴‍☠️" },
-  { id: "fairy-tale",       name: "Fairy Tale",      icon: "🏰" },
-  { id: "playground",       name: "Playground",      icon: "🎈" },
-  { id: "skate-park",       name: "Skate Park",      icon: "🛹" },
-  { id: "robot-lab",        name: "Robot Lab",       icon: "🤖" },
-  { id: "sports",           name: "Sports Fun",      icon: "⚽" },
-  { id: "magical-city",     name: "Magical City",    icon: "✨" },
-];
-
-function themeWallpaperUrl(id: string): string {
-  const remap: Record<string, string> = {
-    ocean: "ocean-explorers",
-    pirates: "pirates-cove",
-    sports: "sports-fun",
-  };
-  return `/wallpapers/${remap[id] ?? id}.png`;
-}
 
 export default function Setup() {
   const [, setLocation] = useLocation();
@@ -39,7 +15,6 @@ export default function Setup() {
 
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
-  const [theme, setTheme] = useState<WallTheme>("blast-off");
   const [surpriseMode, setSurpriseMode] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -50,7 +25,6 @@ export default function Setup() {
       if (profile) {
         setName(profile.name);
         setImage(profile.imageBase64);
-        setTheme(profile.theme);
         setSurpriseMode(profile.surpriseMode);
       } else {
         setLocation("/");
@@ -78,7 +52,7 @@ export default function Setup() {
       id: isEditing ? params.id! : crypto.randomUUID(),
       name: name.trim(),
       imageBase64: image,
-      theme,
+      theme: "blast-off" as any,
       surpriseMode,
       createdAt: isEditing ? getProfile(params.id!)!.createdAt : Date.now(),
     };
@@ -166,38 +140,6 @@ export default function Setup() {
             accept="image/*"
             className="hidden"
           />
-        </div>
-
-        {/* Bubble Cover / Theme */}
-        <div>
-          <label className="block text-xs font-black text-muted-foreground mb-3 uppercase tracking-widest">
-            Bubble Cover
-          </label>
-          <div className="grid grid-cols-4 gap-2">
-            {THEMES.map((t) => (
-              <motion.div
-                key={t.id}
-                whileTap={{ scale: 0.94 }}
-                onClick={() => setTheme(t.id)}
-                data-testid={`theme-${t.id}`}
-                className={`rounded-2xl overflow-hidden cursor-pointer border-4 transition-all ${
-                  theme === t.id
-                    ? "border-primary shadow-lg scale-105"
-                    : "border-transparent shadow-sm"
-                }`}
-              >
-                <div
-                  className="aspect-square bg-cover bg-center"
-                  style={{ backgroundImage: `url(${themeWallpaperUrl(t.id)})` }}
-                />
-                <div className="bg-white px-1 py-1.5 text-center">
-                  <span className="text-[10px] font-black text-foreground leading-tight block">
-                    {t.icon} {t.name}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
         </div>
 
         {/* Keep it secret / Surprise Mode */}

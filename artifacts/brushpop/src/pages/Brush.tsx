@@ -85,12 +85,17 @@ export default function Brush() {
   const navigatedRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  useEffect(() => {
-    const audio = new Audio("/brush-song-v2.mp3");
-    audio.loop = false;
-    audio.volume = 0.5;
-    audioRef.current = audio;
-    return () => { audio.pause(); audio.src = ""; };
+  // iOS Safari fix: don't create audio in useEffect.
+  // Instead, create and prime it on first user tap.
+  const audioCreatedRef = useRef(false);
+  const ensureAudio = useCallback(() => {
+    if (!audioCreatedRef.current) {
+      const audio = new Audio("/brush-song-v2.mp3");
+      audio.loop = false;
+      audio.volume = 0.5;
+      audioRef.current = audio;
+      audioCreatedRef.current = true;
+    }
   }, []);
 
   useEffect(() => {
@@ -106,16 +111,23 @@ export default function Brush() {
   }, []);
 
   const startBrushing = useCallback(() => {
+    // Create audio on this direct tap event for iOS compatibility
+    ensureAudio();
+
     popOrderRef.current = shuffleArray(BUBBLE_COUNT);
     poppedCountRef.current = 0;
     navigatedRef.current = false;
     setPoppedBubbles(new Set());
     setTimeLeft(TOTAL_TIME);
     setIsBrushing(true);
+
+    // Play audio immediately in this tap handler call stack
     if (audioRef.current && !muted) {
       audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
+      const playPromise = audioRef.current.play();
+      if (playPromise) playPromise.catch(() => {});
     }
+
     startTimeRef.current = Date.now();
 
     intervalRef.current = window.setInterval(() => {
@@ -148,9 +160,17 @@ export default function Brush() {
         setPoppedBubbles(newPopped);
       }
     }, 100);
-  }, [params.id, setLocation, muted]);
+  }, [params.id, setLocation, muted, ensureAudio]);
 
-  useEffect(() => { return () => stopTimer(); }, [stopTimer]);
+  useEffect(() => {
+    return () => {
+      stopTimer();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
+    };
+  }, [stopTimer]);
 
   const handleCancel = () => {
     if (confirm("Stop brushing? You'll lose your progress!")) {
