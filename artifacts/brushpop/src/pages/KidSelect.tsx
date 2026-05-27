@@ -43,7 +43,7 @@ export default function KidSelect() {
         <img
           src="/brushpop-logo.png"
           alt="BrushPop"
-          className="h-36 mx-auto mb-2 drop-shadow-lg"
+          className="h-44 mx-auto mb-2 drop-shadow-lg"
         />
         <p className="text-foreground/60 font-bold text-base mt-1">Pop the plaque. Reveal the prize.</p>
       </div>
@@ -156,6 +156,15 @@ export default function KidSelect() {
           </div>
         </div>
       )}
+      <div className="w-full text-center py-6 px-4 mt-auto">
+        <p className="text-[10px] text-foreground/30 leading-relaxed">
+          © 2026 Brighter Mind Labs. All rights reserved.
+          <br />
+          BrushPop™ is a product of Brighter Mind Labs.
+          <br />
+          <span className="underline cursor-pointer">Terms of Service</span> · <span className="underline cursor-pointer">Privacy Policy</span>
+        </p>
+      </div>
     </motion.div>
   );
 }

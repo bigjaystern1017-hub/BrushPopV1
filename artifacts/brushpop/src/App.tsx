@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +10,7 @@ import Setup from "./pages/Setup";
 import Brush from "./pages/Brush";
 import Celebrate from "./pages/Celebrate";
 import Collection from "./pages/Collection";
+import Splash from "@/pages/Splash";
 
 function Router() {
   return (
@@ -27,12 +29,19 @@ function Router() {
 }
 
 function App() {
+  const [splashDone, setSplashDone] = useState(false);
+
   return (
     <TooltipProvider>
-      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-        <Router />
-      </WouterRouter>
-      <Toaster />
+      <>
+        {!splashDone && <Splash onComplete={() => setSplashDone(true)} />}
+        <div style={{ visibility: splashDone ? "visible" : "hidden" }}>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Router />
+          </WouterRouter>
+          <Toaster />
+        </div>
+      </>
     </TooltipProvider>
   );
 }
