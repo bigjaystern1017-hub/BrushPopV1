@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:20px;font-family:sans-serif;">
+  <h1>Audio Test</h1>
+  
+  <button onclick="testSong()" style="padding:20px 40px;font-size:24px;border-radius:12px;background:#FF6B7A;color:white;border:none;">
+    Play Brush Song
+  </button>
+  
+  <button onclick="testFanfare()" style="padding:20px 40px;font-size:24px;border-radius:12px;background:#00B4D8;color:white;border:none;">
+    Play Fanfare
+  </button>
+
+  <button onclick="testBeep()" style="padding:20px 40px;font-size:24px;border-radius:12px;background:#4ADE80;color:white;border:none;">
+    Play Web Audio Beep
+  </button>
+
+  <div id="log" style="margin-top:20px;padding:20px;background:#f0f0f0;border-radius:8px;width:90%;max-width:400px;font-size:14px;"></div>
+
+  <script>
+    function log(msg) {
+      document.getElementById('log').innerHTML += msg + '<br>';
+      console.log(msg);
+    }
+
+    function testSong() {
+      log('Trying brush-song-v2.mp3...');
+      try {
+        var a = new Audio('/brush-song-v2.mp3');
+        a.volume = 1.0;
+        a.play()
+          .then(function() { log('SUCCESS: song is playing'); })
+          .catch(function(e) { log('FAILED: ' + e.message); });
+      } catch(e) {
+        log('ERROR creating audio: ' + e.message);
+      }
+    }
+
+    function testFanfare() {
+      log('Trying fanfare.mp3...');
+      try {
+        var a = new Audio('/fanfare.mp3');
+        a.volume = 1.0;
+        a.play()
+          .then(function() { log('SUCCESS: fanfare is playing'); })
+          .catch(function(e) { log('FAILED: ' + e.message); });
+      } catch(e) {
+        log('ERROR creating audio: ' + e.message);
+      }
+    }
+
+    function testBeep() {
+      log('Trying Web Audio API beep...');
+      try {
+        var ctx = new (window.AudioContext || window.webkitAudioContext)();
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 440;
+        gain.gain.value = 0.3;
+        osc.start();
+        setTimeout(function() { osc.stop(); }, 500);
+        log('SUCCESS: beep should be audible');
+      } catch(e) {
+        log('ERROR: ' + e.message);
+      }
+    }
+  </script>
+</body>
+</html>
