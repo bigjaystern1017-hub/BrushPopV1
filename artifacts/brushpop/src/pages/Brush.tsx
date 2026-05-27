@@ -138,16 +138,20 @@ export default function Brush() {
       if (remaining <= 0) {
         clearInterval(intervalRef.current!);
         intervalRef.current = null;
-        if (audioRef.current) audioRef.current.pause();
         setPoppedBubbles(new Set(Array.from({ length: BUBBLE_COUNT }, (_, i) => i)));
         if (!navigatedRef.current) {
           navigatedRef.current = true;
-          // Play fanfare right here while we still have audio context
-          try {
-            const fanfare = new Audio("/fanfare.m4a");
-            fanfare.volume = 0.8;
-            fanfare.play().catch(() => {});
-          } catch {}
+          // Reuse the existing audio element for the fanfare
+          // iOS only allows one Audio element to play — swapping src on
+          // the already-unlocked element avoids the restriction
+          if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.src = "/fanfare.m4a";
+            audioRef.current.loop = false;
+            audioRef.current.volume = 0.8;
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch(() => {});
+          }
           setTimeout(() => setLocation(`/celebrate/${params.id}`), 1500);
         }
         return;
