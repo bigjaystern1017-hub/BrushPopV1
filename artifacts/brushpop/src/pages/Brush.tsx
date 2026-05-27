@@ -142,6 +142,12 @@ export default function Brush() {
         setPoppedBubbles(new Set(Array.from({ length: BUBBLE_COUNT }, (_, i) => i)));
         if (!navigatedRef.current) {
           navigatedRef.current = true;
+          // Play fanfare right here while we still have audio context
+          try {
+            const fanfare = new Audio("/fanfare.m4a");
+            fanfare.volume = 0.8;
+            fanfare.play().catch(() => {});
+          } catch {}
           setTimeout(() => setLocation(`/celebrate/${params.id}`), 1500);
         }
         return;

@@ -15,7 +15,6 @@ export default function Celebrate() {
   const [streak, setStreak] = useState(0);
   const sessionSavedRef = useRef(false);
   const fanfareRef = useRef<HTMLAudioElement | null>(null);
-  const fanfarePlayedRef = useRef(false);
 
   useEffect(() => {
     if (!loaded) return;
@@ -47,19 +46,6 @@ export default function Celebrate() {
     };
   }, [loaded, profile?.id]);
 
-  // Play fanfare on first tap anywhere on the screen (iOS-safe)
-  const playFanfare = () => {
-    if (!fanfarePlayedRef.current) {
-      fanfarePlayedRef.current = true;
-      try {
-        const fanfare = new Audio("/fanfare.m4a");
-        fanfare.volume = 0.7;
-        fanfareRef.current = fanfare;
-        fanfare.play().catch(() => {});
-      } catch {}
-    }
-  };
-
   if (!loaded)
     return (
       <div className="min-h-screen bg-transparent flex items-center justify-center">
@@ -72,8 +58,6 @@ export default function Celebrate() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      onClick={playFanfare}
-      onTouchStart={playFanfare}
       className="min-h-screen bg-transparent max-w-md mx-auto relative flex flex-col items-center justify-center p-6 overflow-hidden"
     >
       {/* Confetti */}
