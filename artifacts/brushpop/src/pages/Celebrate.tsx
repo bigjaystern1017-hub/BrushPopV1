@@ -39,7 +39,7 @@ export default function Celebrate() {
 
   if (!loaded)
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
       </div>
     );
@@ -49,7 +49,7 @@ export default function Celebrate() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen bg-background max-w-md mx-auto relative flex flex-col items-center justify-center p-6 overflow-hidden"
+      className="min-h-screen bg-transparent max-w-md mx-auto relative flex flex-col items-center justify-center p-6 overflow-hidden"
     >
       {/* Confetti */}
       {Array.from({ length: 55 }).map((_, i) => (

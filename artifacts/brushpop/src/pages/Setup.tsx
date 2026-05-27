@@ -99,10 +99,10 @@ export default function Setup() {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="min-h-screen bg-background max-w-md mx-auto relative flex flex-col"
+      className="min-h-screen bg-transparent max-w-md mx-auto relative flex flex-col"
     >
       {/* Header */}
-      <div className="bg-white px-4 py-3 shadow-sm flex items-center justify-between sticky top-0 z-10">
+      <div className="bg-white/90 backdrop-blur-md px-4 py-3 shadow-sm flex items-center justify-between sticky top-0 z-10">
         <button onClick={() => setLocation("/")} className="p-2 rounded-full hover:bg-muted">
           <ChevronLeft className="w-6 h-6" />
         </button>
@@ -226,7 +226,7 @@ export default function Setup() {
       </div>
 
       {/* Save */}
-      <div className="p-6 sticky bottom-0 bg-background/90 backdrop-blur-md pb-8">
+      <div className="p-6 sticky bottom-0 bg-white/70 backdrop-blur-md pb-8">
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleSave}

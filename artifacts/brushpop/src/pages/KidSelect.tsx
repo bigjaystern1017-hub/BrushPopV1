@@ -36,7 +36,7 @@ export default function KidSelect() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="min-h-screen bg-background flex flex-col items-center max-w-md mx-auto"
+      className="min-h-screen bg-transparent flex flex-col items-center max-w-md mx-auto"
     >
       {/* Header */}
       <div className="w-full text-center pt-10 pb-8 px-6">
