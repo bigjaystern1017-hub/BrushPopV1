@@ -34,9 +34,25 @@ function generateBubbles(count: number): { id: number; x: number; y: number; siz
 }
 
 function tileEasing(t: number): number {
-  if (t < 0.20) return t * 0.4;
-  if (t > 0.85) return 0.75 + (t - 0.85) * 1.67;
-  return 0.08 + (t - 0.20) * 1.031;
+  // Base linear progress ensures something is ALWAYS happening
+  const base = t;
+  
+  // Layer multiple sine waves at different frequencies to create
+  // unpredictable speed changes — fast bursts then slow anticipation
+  // Wave 1: slow pulse (2 full cycles over the timer)
+  const wave1 = Math.sin(t * Math.PI * 4) * 0.04;
+  // Wave 2: medium pulse (5 cycles) — this creates the main fast/slow feel
+  const wave2 = Math.sin(t * Math.PI * 10) * 0.06;
+  // Wave 3: fast flutter (8 cycles) — adds unpredictability
+  const wave3 = Math.sin(t * Math.PI * 16 + 0.5) * 0.025;
+  
+  // Combine: base progress + wave modulations
+  // The waves speed up and slow down the reveal rate without ever stopping
+  const result = base + wave1 + wave2 + wave3;
+  
+  // Clamp between 0 and 1, and ensure it never goes backward
+  // (monotonically increasing — bubbles never "un-pop")
+  return Math.max(0, Math.min(1, result));
 }
 
 function shuffleArray(length: number): number[] {
