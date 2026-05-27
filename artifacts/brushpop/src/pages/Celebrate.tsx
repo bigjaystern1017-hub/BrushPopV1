@@ -13,6 +13,7 @@ export default function Celebrate() {
 
   const [streak, setStreak] = useState(0);
   const sessionSavedRef = useRef(false);
+  const fanfareRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (!loaded) return;
@@ -34,7 +35,21 @@ export default function Celebrate() {
       setTimeout(() => {
         setStreak(getStreak(profile.id));
       }, 100);
+      // Play celebration fanfare
+      try {
+        const fanfare = new Audio("/fanfare.mp3");
+        fanfare.volume = 0.7;
+        fanfareRef.current = fanfare;
+        fanfare.play().catch(() => {});
+      } catch {}
     }
+
+    return () => {
+      if (fanfareRef.current) {
+        fanfareRef.current.pause();
+        fanfareRef.current = null;
+      }
+    };
   }, [loaded, profile?.id]);
 
   if (!loaded)

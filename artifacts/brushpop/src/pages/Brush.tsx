@@ -86,8 +86,8 @@ export default function Brush() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    const audio = new Audio("/brush-song.mp3");
-    audio.loop = true;
+    const audio = new Audio("/brush-song-v2.mp3");
+    audio.loop = false;
     audio.volume = 0.5;
     audioRef.current = audio;
     return () => { audio.pause(); audio.src = ""; };
