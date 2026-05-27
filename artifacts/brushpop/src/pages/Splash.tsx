@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { CLINIC } from "@/lib/clinicConfig";
 
 interface SplashProps {
   onComplete: () => void;
@@ -79,6 +80,17 @@ export default function Splash({ onComplete }: SplashProps) {
           >
             Pop the plaque. Reveal the prize.
           </motion.p>
+
+          {CLINIC.showBranding && (
+            <motion.p
+              className="text-foreground/40 font-semibold text-sm mt-6 relative z-10"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.2, duration: 0.5 }}
+            >
+              Brought to you by {CLINIC.name}
+            </motion.p>
+          )}
         </motion.div>
       )}
     </AnimatePresence>

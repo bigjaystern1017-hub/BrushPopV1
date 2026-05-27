@@ -1,0 +1,67 @@
+Add dentist branding throughout the app. For now we hardcode a placeholder. Later this will be dynamic per client.
+Step 1: Create a config file.
+Create a new file artifacts/brushpop/src/lib/clinicConfig.ts:
+tsxexport const CLINIC = {
+  name: "Your Pediatric Dentist",
+  phone: "(555) 123-4567",
+  bookingUrl: "tel:+15551234567",
+  showBranding: true, // set to false for the free consumer version
+};
+Step 2: Add branding to the splash screen.
+In Splash.tsx, import the config:
+tsximport { CLINIC } from "@/lib/clinicConfig";
+After the tagline <motion.p> element, add:
+tsx{CLINIC.showBranding && (
+  <motion.p
+    className="text-foreground/40 font-semibold text-sm mt-6 relative z-10"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ delay: 1.2, duration: 0.5 }}
+  >
+    Brought to you by {CLINIC.name}
+  </motion.p>
+)}
+Step 3: Add branding to the home screen footer.
+In KidSelect.tsx, import the config:
+tsximport { CLINIC } from "@/lib/clinicConfig";
+Find the footer copyright div at the bottom. Replace it with:
+tsx<div className="w-full text-center py-6 px-4 mt-auto">
+  {CLINIC.showBranding && (
+    <div className="mb-3 py-3 px-4 bg-white/40 backdrop-blur-sm rounded-2xl inline-block">
+      <p className="text-foreground/50 font-bold text-xs">
+        Provided by {CLINIC.name}
+      </p>
+      <p className="text-foreground/35 text-[11px] mt-0.5">
+        {CLINIC.phone}
+      </p>
+    </div>
+  )}
+  <p className="text-[10px] text-foreground/30 leading-relaxed">
+    © 2026 Brighter Mind Labs. All rights reserved.
+    <br />
+    BrushPop™ is a product of Brighter Mind Labs.
+    <br />
+    <span className="underline cursor-pointer">Terms of Service</span> · <span className="underline cursor-pointer">Privacy Policy</span>
+  </p>
+</div>
+Step 4: Add branding and CTA to the celebration screen.
+In Celebrate.tsx, import the config:
+tsximport { CLINIC } from "@/lib/clinicConfig";
+Find the "Back Home" button. Right ABOVE it, add:
+tsx{CLINIC.showBranding && (
+  <div className="w-full mb-4 bg-white/80 backdrop-blur-sm rounded-2xl p-4 text-center">
+    <p className="text-foreground/50 text-xs font-bold mb-2">
+      Healthy smiles brought to you by
+    </p>
+    <p className="text-foreground font-black text-base">
+      {CLINIC.name}
+    </p>
+    
+      href={CLINIC.bookingUrl}
+      className="inline-block mt-3 bg-accent text-white font-bold text-sm py-2 px-6 rounded-full shadow-md active:scale-95 transition-transform"
+    >
+      📞 Book Your Next Checkup
+    </a>
+  </div>
+)}
+Do not change any timer, bubble, audio, or routing logic.

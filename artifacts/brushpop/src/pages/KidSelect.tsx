@@ -2,6 +2,7 @@ import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Plus, Trophy, Settings } from "lucide-react";
 import { useProfiles } from "@/lib/useProfiles";
+import { CLINIC } from "@/lib/clinicConfig";
 
 const THEME_ICONS: Record<string, string> = {
   "blast-off": "🚀",
@@ -157,6 +158,16 @@ export default function KidSelect() {
         </div>
       )}
       <div className="w-full text-center py-6 px-4 mt-auto">
+        {CLINIC.showBranding && (
+          <div className="mb-3 py-3 px-4 bg-white/40 backdrop-blur-sm rounded-2xl inline-block">
+            <p className="text-foreground/50 font-bold text-xs">
+              Provided by {CLINIC.name}
+            </p>
+            <p className="text-foreground/35 text-[11px] mt-0.5">
+              {CLINIC.phone}
+            </p>
+          </div>
+        )}
         <p className="text-[10px] text-foreground/30 leading-relaxed">
           © 2026 Brighter Mind Labs. All rights reserved.
           <br />
