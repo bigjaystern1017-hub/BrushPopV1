@@ -1,4 +1,6 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+Major visual change to the brushing screen. Replace the wallpaper tile system with overlapping circular bubbles that pop away to reveal the hidden image.
+Replace the ENTIRE contents of artifacts/brushpop/src/pages/Brush.tsx with this code. Do not modify it:
+tsximport { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLocation, useParams } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
@@ -279,3 +281,15 @@ export default function Brush() {
     </div>
   );
 }
+Key details about this approach:
+
+160 bubbles arranged in a honeycomb-like grid pattern with slight random offsets, ensuring full screen coverage with overlap
+Each bubble is a CSS circle (border-radius: 50%) with a radial gradient that looks like a shiny soap bubble
+Bubbles are all in the BrushPop blue hue range (195-215) for brand consistency
+Each bubble has a white shine highlight to look 3D and glossy
+When a bubble pops, it scales up slightly then shrinks to zero — like a real bubble popping
+No wallpaper images needed — the bubbles are pure CSS
+The theme/wallpaper system in Brush.tsx is no longer used but keep the THEME_WALLPAPERS object and the wallpaper files for now — we may want to offer them as an alternative view later
+Remove the wallpaperLoaded state check from the loading condition since we no longer load a wallpaper image
+
+Do not change any other files. The Setup.tsx theme selector can stay for now — we'll simplify it in a future prompt.
