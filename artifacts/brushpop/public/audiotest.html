@@ -25,9 +25,9 @@
     }
 
     function testSong() {
-      log('Trying brush-song-v2.mp3...');
+      log('Trying brush-song-v2.m4a...');
       try {
-        var a = new Audio('/brush-song-v2.mp3');
+        var a = new Audio('/brush-song-v2.m4a');
         a.volume = 1.0;
         a.play()
           .then(function() { log('SUCCESS: song is playing'); })
@@ -38,9 +38,9 @@
     }
 
     function testFanfare() {
-      log('Trying fanfare.mp3...');
+      log('Trying fanfare.m4a...');
       try {
-        var a = new Audio('/fanfare.mp3');
+        var a = new Audio('/fanfare.m4a');
         a.volume = 1.0;
         a.play()
           .then(function() { log('SUCCESS: fanfare is playing'); })

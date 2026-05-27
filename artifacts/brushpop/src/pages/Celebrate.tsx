@@ -52,7 +52,7 @@ export default function Celebrate() {
     if (!fanfarePlayedRef.current) {
       fanfarePlayedRef.current = true;
       try {
-        const fanfare = new Audio("/fanfare.mp3");
+        const fanfare = new Audio("/fanfare.m4a");
         fanfare.volume = 0.7;
         fanfareRef.current = fanfare;
         fanfare.play().catch(() => {});

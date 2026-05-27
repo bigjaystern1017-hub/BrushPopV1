@@ -117,7 +117,7 @@ export default function Brush() {
           audioRef.current.src = "";
         }
         console.log("AUDIO DEBUG: muted =", muted, "creating audio...");
-        const audio = new Audio("/brush-song-v2.mp3");
+        const audio = new Audio("/brush-song-v2.m4a");
         audio.volume = 0.5;
         audio.loop = false;
         audioRef.current = audio;
