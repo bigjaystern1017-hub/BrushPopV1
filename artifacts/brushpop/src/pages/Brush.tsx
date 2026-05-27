@@ -52,6 +52,10 @@ export default function Brush() {
   const { getProfile, loaded } = useProfiles();
   const profile = getProfile(params.id || "");
 
+  // One-time reset: clear any stale mute preference so audio works
+  // Remove this line after confirming audio works on mobile
+  if (typeof window !== "undefined") localStorage.removeItem("brushpop_muted");
+
   const [isBrushing, setIsBrushing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
   const [poppedBubbles, setPoppedBubbles] = useState<Set<number>>(new Set());
@@ -75,6 +79,18 @@ export default function Brush() {
   useEffect(() => {
     if (loaded && !profile) setLocation("/");
   }, [loaded, profile, setLocation]);
+
+  // iOS requires a user gesture to unlock the Web Audio context.
+  // This listener primes it on the very first touch anywhere on the page.
+  useEffect(() => {
+    const unlock = () => {
+      const silence = new Audio("data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRwTHAAAAAAAAAAAAAAAAAAAA//tQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
+      silence.play().then(() => silence.pause()).catch(() => {});
+      document.removeEventListener("touchstart", unlock);
+    };
+    document.addEventListener("touchstart", unlock, { once: true });
+    return () => document.removeEventListener("touchstart", unlock);
+  }, []);
 
   const stopTimer = useCallback(() => {
     if (intervalRef.current !== null) {
@@ -100,11 +116,13 @@ export default function Brush() {
           audioRef.current.pause();
           audioRef.current.src = "";
         }
+        console.log("AUDIO DEBUG: muted =", muted, "creating audio...");
         const audio = new Audio("/brush-song-v2.mp3");
         audio.volume = 0.5;
         audio.loop = false;
         audioRef.current = audio;
         audio.play().catch((err) => console.warn("Audio play failed:", err));
+        console.log("AUDIO DEBUG: play() called successfully");
       } catch (e) {
         console.warn("Audio creation failed:", e);
       }

@@ -1,0 +1,28 @@
+The code looks correct. The muted issue from localStorage is handled. Audio creation and play are in the same synchronous tap handler. Let me check one more thing — there's a subtle useCallback dependency issue. muted is in the dependency array on line 145, which means the startBrushing function gets recreated when muted changes. But the useEffect on lines 60-64 sets muted to true after mount if localStorage has it. The race could mean the START BRUSHING button's onClick is pointing at a stale closure where muted was already flipped to true.
+Actually wait — there's a more likely problem. You said you tapped the mute button at some point, right? That sets brushpop_muted to "true" in localStorage. The component now starts with muted = false, but the useEffect immediately flips it to true before you tap anything. So when you tap START BRUSHING, muted is true and the if (!muted) check on line 96 skips audio entirely.
+Prompt #19 — paste into Replit:
+
+Fix audio on mobile. The root cause is likely that brushpop_muted is set to "true" in localStorage from a previous session. The useEffect flips muted to true before the user taps START BRUSHING, so audio never plays.
+In Brush.tsx, make these changes:
+1. Clear the stale mute state. Add this line at the very top of the component function, before any state declarations:
+tsx// One-time reset: clear any stale mute preference so audio works
+// Remove this line after confirming audio works on mobile
+if (typeof window !== 'undefined') localStorage.removeItem("brushpop_muted");
+2. Also add visible debug feedback so we can confirm what's happening. In the startBrushing function, right before const audio = new Audio(...), add:
+tsxconsole.log("AUDIO DEBUG: muted =", muted, "creating audio...");
+And right after audio.play().catch(...), add:
+tsxconsole.log("AUDIO DEBUG: play() called successfully");
+3. As a nuclear fallback, also add a touchstart event listener approach. Right after the component mounts, prime the audio context. Add this useEffect:
+tsxuseEffect(() => {
+  // iOS requires a user gesture to unlock the Web Audio context.
+  // This listener primes it on the very first touch anywhere on the page.
+  const unlock = () => {
+    const silence = new Audio("data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRwTHAAAAAAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRwTHAAAAAAAAAAAAAAAAAAAA");
+    silence.play().then(() => silence.pause()).catch(() => {});
+    document.removeEventListener("touchstart", unlock);
+  };
+  document.addEventListener("touchstart", unlock, { once: true });
+  return () => document.removeEventListener("touchstart", unlock);
+}, []);
+This plays a tiny silent audio clip on the very first touch anywhere on the screen, which unlocks iOS Safari's audio context. After that, any subsequent .play() calls will work even if they're not in a direct gesture handler.
+Do not change anything else.
