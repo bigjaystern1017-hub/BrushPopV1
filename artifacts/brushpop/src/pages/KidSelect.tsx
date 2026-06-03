@@ -19,15 +19,6 @@ const THEME_ICONS: Record<string, string> = {
   "magical-city": "✨",
 };
 
-function themeWallpaperUrl(id: string): string {
-  const remap: Record<string, string> = {
-    ocean: "ocean-explorers",
-    pirates: "pirates-cove",
-    sports: "sports-fun",
-  };
-  return `/wallpapers/${remap[id] ?? id}.png`;
-}
-
 export default function KidSelect() {
   const { profiles } = useProfiles();
   const [, setLocation] = useLocation();
@@ -87,11 +78,8 @@ export default function KidSelect() {
                 className="bg-white rounded-3xl shadow-md overflow-hidden cursor-pointer border-2 border-white hover:border-primary/30 transition-colors"
                 onClick={() => setLocation(`/brush/${profile.id}`)}
               >
-                {/* Theme wallpaper banner strip */}
-                <div
-                  className="h-2 w-full bg-cover bg-center"
-                  style={{ backgroundImage: `url(${themeWallpaperUrl(profile.theme)})` }}
-                />
+                {/* Accent strip */}
+                <div className="h-2 w-full bg-primary" />
 
                 {/* Image / initial */}
                 <div className="aspect-square relative overflow-hidden bg-muted flex items-center justify-center">
