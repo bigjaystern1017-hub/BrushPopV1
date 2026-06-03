@@ -44,7 +44,7 @@ export default function KidSelect() {
         <img
           src="/brushpop-logo.png"
           alt="BrushPop"
-          className="h-44 mx-auto mb-2 drop-shadow-lg"
+          className="h-[246px] mx-auto mb-2 drop-shadow-lg"
         />
         <p className="text-foreground/60 font-bold text-base mt-1">Pop the plaque. Reveal the prize.</p>
       </div>

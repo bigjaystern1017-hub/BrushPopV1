@@ -201,7 +201,7 @@ export default function Brush() {
     <div className="h-[100dvh] w-full max-w-md mx-auto bg-black relative overflow-hidden flex flex-col">
       {/* Hidden photo underneath */}
       <div className="absolute inset-0 z-0">
-        <img src={profile.imageBase64} alt="Hidden" className="w-full h-full object-cover" />
+        <img src={profile.imageBase64} alt="Hidden" className="w-full h-full object-contain" />
       </div>
 
       {/* Bubble overlay */}

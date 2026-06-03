@@ -61,7 +61,7 @@ export default function Splash({ onComplete }: SplashProps) {
           <motion.img
             src="/brushpop-logo.png"
             alt="BrushPop"
-            className="h-48 drop-shadow-xl relative z-10"
+            className="h-[269px] drop-shadow-xl relative z-10"
             initial={{ scale: 0, rotate: -10 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{
