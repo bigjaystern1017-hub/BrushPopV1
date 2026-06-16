@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import { VitePWA } from "vite-plugin-pwa";
 
 const rawPort = process.env.PORT;
 
@@ -32,6 +33,56 @@ export default defineConfig({
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
+    VitePWA({
+      registerType: "autoUpdate",
+      injectRegister: "auto",
+      // Use the existing public/manifest.json — don't auto-generate one
+      manifest: false,
+      // Don't activate SW in dev (avoids stale caching during development)
+      devOptions: {
+        enabled: false,
+      },
+      workbox: {
+        // Precache everything Vite builds + all public-folder assets.
+        // Raise the limit to 6 MB so brush-song-v2.m4a (4.4 MB) and
+        // brushpop-logo.png (2.2 MB) are included — both are critical offline.
+        globPatterns: [
+          "**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,gif,woff,woff2,ttf,otf,json,m4a,mp3,wav,ogg}",
+        ],
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // 6 MB
+        // Take control immediately on install — no waiting for tabs to close
+        skipWaiting: true,
+        clientsClaim: true,
+        runtimeCaching: [
+          // Google Fonts stylesheet — cache-first so they work offline
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "google-fonts-stylesheets",
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365,
+              },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          // Google Fonts files (woff2, etc.)
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "google-fonts-webfonts",
+              expiration: {
+                maxEntries: 30,
+                maxAgeSeconds: 60 * 60 * 24 * 365,
+              },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+      },
+    }),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [
