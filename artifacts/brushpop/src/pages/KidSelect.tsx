@@ -1,7 +1,8 @@
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Plus, Trophy, Settings } from "lucide-react";
+import { Plus, Trophy, Settings, Flame, Camera, Info } from "lucide-react";
 import { useProfiles } from "@/lib/useProfiles";
+import { useSessions } from "@/lib/useSessions";
 import { CLINIC } from "@/lib/clinicConfig";
 
 const THEME_ICONS: Record<string, string> = {
@@ -21,6 +22,7 @@ const THEME_ICONS: Record<string, string> = {
 
 export default function KidSelect() {
   const { profiles } = useProfiles();
+  const { getStreak } = useSessions();
   const [, setLocation] = useLocation();
 
   return (
@@ -104,17 +106,41 @@ export default function KidSelect() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-between items-center px-3 py-2 bg-white">
+                <div className="flex items-center gap-1.5 px-2.5 py-2 bg-white">
+                  {/* Streak badge */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLocation(`/streak/${profile.id}`);
+                    }}
+                    data-testid={`button-streak-${profile.id}`}
+                    className="flex items-center gap-0.5 text-xs font-black text-orange-500 bg-orange-50 rounded-full px-2.5 py-1.5 hover:bg-orange-100 transition-colors shrink-0"
+                  >
+                    <Flame className="w-3 h-3" />
+                    {getStreak(profile.id)}
+                  </button>
+                  <div className="flex-1" />
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setLocation(`/collection/${profile.id}`);
                     }}
                     data-testid={`button-rewards-${profile.id}`}
-                    className="flex items-center gap-1 text-xs font-black text-secondary bg-secondary/15 rounded-full px-3 py-1.5 hover:bg-secondary hover:text-white transition-colors"
+                    className="flex items-center gap-1 text-xs font-black text-secondary bg-secondary/15 rounded-full px-2.5 py-1.5 hover:bg-secondary hover:text-white transition-colors"
                   >
                     <Trophy className="w-3.5 h-3.5" />
-                    Rewards
+                    Pops
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLocation(`/photos/${profile.id}`);
+                    }}
+                    data-testid={`button-photos-${profile.id}`}
+                    className="flex items-center gap-1 text-xs font-black text-primary bg-primary/10 rounded-full px-2.5 py-1.5 hover:bg-primary hover:text-white transition-colors"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    Photo
                   </button>
                   <button
                     onClick={(e) => {
@@ -147,14 +173,21 @@ export default function KidSelect() {
       )}
       <div className="w-full text-center py-6 px-4 mt-auto">
         {CLINIC.showBranding && (
-          <div className="mb-3 py-3 px-4 bg-white/40 backdrop-blur-sm rounded-2xl inline-block">
-            <p className="text-foreground/50 font-bold text-xs">
-              Provided by {CLINIC.name}
-            </p>
-            <p className="text-foreground/35 text-[11px] mt-0.5">
-              {CLINIC.phone}
-            </p>
-          </div>
+          <button
+            onClick={() => setLocation("/about")}
+            data-testid="button-about"
+            className="mb-3 py-3 px-5 bg-white/40 backdrop-blur-sm rounded-2xl inline-flex items-center gap-2 hover:bg-white/60 active:scale-95 transition-all"
+          >
+            <Info className="w-3.5 h-3.5 text-foreground/40" />
+            <span>
+              <p className="text-foreground/50 font-bold text-xs text-left">
+                {CLINIC.name}
+              </p>
+              <p className="text-foreground/35 text-[11px] mt-0.5 text-left">
+                Tap to learn more
+              </p>
+            </span>
+          </button>
         )}
         <p className="text-[10px] text-foreground/30 leading-relaxed">
           © 2026 Brighter Mind Labs. All rights reserved.

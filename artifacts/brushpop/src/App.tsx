@@ -11,6 +11,9 @@ import Brush from "./pages/Brush";
 import Celebrate from "./pages/Celebrate";
 import Collection from "./pages/Collection";
 import Splash from "@/pages/Splash";
+import StreakPage from "./pages/StreakPage";
+import Photos from "./pages/Photos";
+import About from "./pages/About";
 
 function Router() {
   return (
@@ -22,6 +25,9 @@ function Router() {
         <Route path="/brush/:id" component={Brush} />
         <Route path="/celebrate/:id" component={Celebrate} />
         <Route path="/collection/:id" component={Collection} />
+        <Route path="/streak/:id" component={StreakPage} />
+        <Route path="/photos/:id" component={Photos} />
+        <Route path="/about" component={About} />
         <Route component={NotFound} />
       </Switch>
     </AnimatePresence>
