@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { motion } from "framer-motion";
 import { useProfiles } from "@/lib/useProfiles";
-import { useSessions } from "@/lib/useSessions";
+import { useSessions, computeStreak, localDateStr } from "@/lib/useSessions";
 import { CLINIC } from "@/lib/clinicConfig";
 
 export default function Celebrate() {
@@ -26,16 +26,15 @@ export default function Celebrate() {
 
     if (!sessionSavedRef.current) {
       sessionSavedRef.current = true;
-      const today = new Date().toISOString().split("T")[0];
-      saveSession({
+      const newSessions = saveSession({
         id: crypto.randomUUID(),
         kidId: profile.id,
-        date: today,
+        date: localDateStr(),      // local calendar date, not UTC
         completedAt: Date.now(),
       });
-      setTimeout(() => {
-        setStreak(getStreak(profile.id));
-      }, 100);
+      // computeStreak is pure — uses the fresh array returned by saveSession,
+      // not the stale React state that hasn't re-rendered yet.
+      setStreak(computeStreak(newSessions, profile.id));
     }
 
     return () => {
