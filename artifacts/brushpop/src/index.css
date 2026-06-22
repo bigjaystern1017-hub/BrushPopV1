@@ -110,6 +110,8 @@
 }
 
 html, body, #root {
+  /* Solid fallback prevents white flash while app-bg.png loads */
+  background-color: hsl(210, 60%, 95%);
   min-height: 100dvh;
   overflow-x: hidden;
 }

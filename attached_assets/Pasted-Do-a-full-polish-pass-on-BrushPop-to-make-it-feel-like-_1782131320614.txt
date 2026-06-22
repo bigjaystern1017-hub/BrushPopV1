@@ -1,0 +1,39 @@
+Do a full polish pass on BrushPop to make it feel like a professional, production-ready app. Go through every screen and fix the following:
+First-launch experience:
+
+Make the splash screen feel intentional — it should display for exactly 2 seconds, animate in smoothly, and transition out cleanly with no blank white flash between screens
+Ensure there are zero blank white flashes or unstyled content flashes anywhere in the app during any transition
+Make sure the app loads fast on first open — no unnecessary delays
+
+Error handling:
+
+If a parent tries to upload a photo that is too large (over 5MB), show a friendly error message: 'That photo is a little too big — try a smaller one!'
+If someone taps the brush button with no photo uploaded yet, show a friendly prompt: 'Add a surprise photo first — your child will love it!'
+If the phone locks or the user navigates away mid-brush session, make sure the session resumes gracefully when they return rather than resetting or showing a broken state
+All empty states across the app (no streak yet, no photos in library yet, no kids added yet) should show friendly, encouraging placeholder text rather than blank space or broken-looking UI
+
+Consistency audit:
+
+Go through every button in the app and make sure they all have a consistent tap/press feedback effect — a slight scale down to 95% on tap
+Check that fonts, corner radius on cards and buttons, and spacing are consistent across every single screen — nothing should feel like it belongs to a different app
+Review all in-app copy for typos, inconsistent capitalization, and punctuation errors — fix anything that looks unpolished
+Make sure the clinic branding (logo, name, booking button) appears consistently in the same position and style across every screen it's supposed to appear on
+
+Sound:
+
+Add a mute/unmute toggle button that is clearly visible on the brushing screen — default should be sound ON but the toggle should be easy to find
+Make sure the mute preference is saved to localStorage so if a family mutes it once, it stays muted on future sessions
+
+Trust and professionalism signals:
+
+Add a small 'Privacy' link in the footer of the app (on the home/kid-select screen) that opens a simple modal or screen with this text: 'BrushPop does not collect or store any personal data on external servers. All photos, profiles, and streak data are stored privately on your own device and are never shared with anyone. This app is not a medical application and does not access any health or patient data.'
+Add a small version number in the footer of the home screen — display it as 'v1.0' in small muted text
+Make sure the 'Book Your Next Checkup' booking button on the celebrate screen and elsewhere is always visible and tappable — it should never be cut off or hidden behind other elements on any screen size
+
+Performance:
+
+Make sure all screen transitions use smooth animations — nothing should snap or jump abruptly
+Optimize any images or assets that might be causing slow loads
+Make sure the app feels snappy on older iPhone models, not just new ones
+
+After making all these changes, do a full walkthrough of every screen in order — splash, home, kid select, setup, brush, celebrate, streak page, photo library, about our practice — and confirm everything looks and works correctly before finishing.

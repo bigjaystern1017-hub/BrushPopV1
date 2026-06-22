@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
-import { motion } from "framer-motion";
-import { ChevronLeft, Camera, Upload, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, Camera, Upload, Trash2, AlertCircle } from "lucide-react";
 import { useProfiles } from "@/lib/useProfiles";
 import { KidProfile } from "@/lib/types";
-import { processImageFile } from "@/lib/imageUtils";
+import { processImageFile, ImageTooLargeError } from "@/lib/imageUtils";
 
 export default function Setup() {
   const [, setLocation] = useLocation();
@@ -16,6 +16,8 @@ export default function Setup() {
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
   const [surpriseMode, setSurpriseMode] = useState(false);
+  const [nameError, setNameError] = useState("");
+  const [imageError, setImageError] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -35,18 +37,31 @@ export default function Setup() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setImageError("");
     try {
       const base64 = await processImageFile(file);
       setImage(base64);
     } catch (err) {
-      console.error(err);
-      alert("Failed to process image");
+      if (err instanceof ImageTooLargeError) {
+        setImageError("That photo is a little too big — try a smaller one!");
+      } else {
+        setImageError("Couldn't load that photo. Please try another one.");
+      }
     }
+    e.target.value = "";
   };
 
   const handleSave = () => {
-    if (!name.trim()) { alert("Please enter a name"); return; }
-    if (!image) { alert("Please upload a surprise image"); return; }
+    let valid = true;
+    if (!name.trim()) {
+      setNameError("Please enter a name for this kid.");
+      valid = false;
+    }
+    if (!image) {
+      setImageError("Please upload a surprise photo first!");
+      valid = false;
+    }
+    if (!valid) return;
 
     const profile: KidProfile = {
       id: isEditing ? params.id! : crypto.randomUUID(),
@@ -77,7 +92,10 @@ export default function Setup() {
     >
       {/* Header */}
       <div className="bg-white/90 backdrop-blur-md px-4 py-3 shadow-sm flex items-center justify-between sticky top-0 z-10">
-        <button onClick={() => setLocation("/")} className="p-2 rounded-full hover:bg-muted">
+        <button
+          onClick={() => setLocation("/")}
+          className="p-2 rounded-full hover:bg-muted active:scale-95 transition-all"
+        >
           <ChevronLeft className="w-6 h-6" />
         </button>
         <h1 className="text-lg font-black">{isEditing ? "Edit BrushPop" : "New BrushPop"}</h1>
@@ -94,11 +112,26 @@ export default function Setup() {
           <input
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => { setName(e.target.value); if (nameError) setNameError(""); }}
             placeholder="Enter their name…"
             data-testid="input-name"
-            className="w-full text-2xl font-black border-b-2 border-muted focus:border-primary outline-none bg-transparent py-2 transition-colors placeholder:text-muted/60"
+            className={`w-full text-2xl font-black border-b-2 outline-none bg-transparent py-2 transition-colors placeholder:text-muted/60 ${
+              nameError ? "border-destructive" : "border-muted focus:border-primary"
+            }`}
           />
+          <AnimatePresence>
+            {nameError && (
+              <motion.p
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                className="flex items-center gap-1.5 text-destructive text-sm font-bold mt-2"
+              >
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                {nameError}
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Image Upload */}
@@ -107,9 +140,11 @@ export default function Setup() {
             Tonight's Surprise 🎁
           </label>
           <div
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => { setImageError(""); fileInputRef.current?.click(); }}
             data-testid="upload-image"
-            className="w-full aspect-square bg-white rounded-3xl border-4 border-dashed border-primary/20 flex flex-col items-center justify-center overflow-hidden cursor-pointer relative hover:border-primary/40 transition-colors"
+            className={`w-full aspect-square bg-white rounded-3xl border-4 border-dashed flex flex-col items-center justify-center overflow-hidden cursor-pointer relative transition-colors ${
+              imageError ? "border-destructive/40" : "border-primary/20 hover:border-primary/40"
+            }`}
           >
             {image ? (
               <>
@@ -133,6 +168,19 @@ export default function Setup() {
               </div>
             )}
           </div>
+          <AnimatePresence>
+            {imageError && (
+              <motion.p
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                className="flex items-center gap-1.5 text-destructive text-sm font-bold mt-3"
+              >
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                {imageError}
+              </motion.p>
+            )}
+          </AnimatePresence>
           <input
             type="file"
             ref={fileInputRef}
@@ -153,7 +201,7 @@ export default function Setup() {
           <button
             onClick={() => setSurpriseMode(!surpriseMode)}
             data-testid="toggle-surprise-mode"
-            className={`w-14 h-8 rounded-full p-1 transition-colors flex-shrink-0 ${
+            className={`w-14 h-8 rounded-full p-1 transition-colors flex-shrink-0 active:scale-95 ${
               surpriseMode ? "bg-primary" : "bg-muted"
             }`}
           >
@@ -181,7 +229,7 @@ export default function Setup() {
           <button
             onClick={handleDelete}
             data-testid="button-delete"
-            className="w-full mt-4 text-destructive font-bold py-2 flex justify-center items-center gap-2 text-sm"
+            className="w-full mt-4 text-destructive font-bold py-2 flex justify-center items-center gap-2 text-sm active:scale-95 transition-all"
           >
             <Trash2 className="w-4 h-4" /> Delete Profile
           </button>

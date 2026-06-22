@@ -6,6 +6,7 @@ import { useProfiles } from "@/lib/useProfiles";
 
 const TOTAL_TIME = 120;
 const BUBBLE_COUNT = 160;
+const RESUME_KEY = "brushpop_resume";
 
 function generateBubbles(count: number): { id: number; x: number; y: number; size: number; hue: number; delay: number }[] {
   const bubbles: { id: number; x: number; y: number; size: number; hue: number; delay: number }[] = [];
@@ -52,20 +53,11 @@ export default function Brush() {
   const { getProfile, loaded } = useProfiles();
   const profile = getProfile(params.id || "");
 
-  // One-time reset: clear any stale mute preference so audio works
-  // Remove this line after confirming audio works on mobile
-  if (typeof window !== "undefined") localStorage.removeItem("brushpop_muted");
-
   const [isBrushing, setIsBrushing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
   const [poppedBubbles, setPoppedBubbles] = useState<Set<number>>(new Set());
-  const [muted, setMuted] = useState(false);
-
-  // Sync muted preference from localStorage after mount
-  useEffect(() => {
-    const stored = localStorage.getItem("brushpop_muted");
-    if (stored === "true") setMuted(true);
-  }, []);
+  const [muted, setMuted] = useState(() => localStorage.getItem("brushpop_muted") === "true");
+  const [noPhotoMsg, setNoPhotoMsg] = useState(false);
 
   const bubbles = useMemo(() => generateBubbles(BUBBLE_COUNT), []);
 
@@ -76,12 +68,67 @@ export default function Brush() {
   const navigatedRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Navigate home if profile not found
   useEffect(() => {
     if (loaded && !profile) setLocation("/");
   }, [loaded, profile, setLocation]);
 
+  // Session resume: check localStorage for an interrupted session after profile confirms loaded
+  useEffect(() => {
+    if (!loaded || !profile) return;
+    try {
+      const raw = localStorage.getItem(RESUME_KEY);
+      if (!raw) return;
+      const saved: { startedAt: number; kidId: string } = JSON.parse(raw);
+      if (saved.kidId !== profile.id) { localStorage.removeItem(RESUME_KEY); return; }
+      const elapsed = (Date.now() - saved.startedAt) / 1000;
+      if (elapsed >= TOTAL_TIME) {
+        localStorage.removeItem(RESUME_KEY);
+        navigatedRef.current = true;
+        setLocation(`/celebrate/${profile.id}`);
+        return;
+      }
+      // Pre-populate bubble state to match elapsed time
+      const initialPopped = Math.min(BUBBLE_COUNT, Math.floor(tileEasing(elapsed / TOTAL_TIME) * BUBBLE_COUNT));
+      const initialSet = new Set<number>();
+      for (let i = 0; i < initialPopped; i++) initialSet.add(popOrderRef.current[i]);
+      poppedCountRef.current = initialPopped;
+      setTimeLeft(Math.ceil(TOTAL_TIME - elapsed));
+      setPoppedBubbles(initialSet);
+      setIsBrushing(true);
+
+      const startedAt = saved.startedAt;
+      intervalRef.current = window.setInterval(() => {
+        const el = (Date.now() - startedAt) / 1000;
+        const rem = Math.max(0, TOTAL_TIME - el);
+        setTimeLeft(Math.ceil(rem));
+        if (rem <= 0) {
+          clearInterval(intervalRef.current!);
+          intervalRef.current = null;
+          localStorage.removeItem(RESUME_KEY);
+          setPoppedBubbles(new Set(Array.from({ length: BUBBLE_COUNT }, (_, i) => i)));
+          if (!navigatedRef.current) {
+            navigatedRef.current = true;
+            if (audioRef.current) audioRef.current.pause();
+            setTimeout(() => setLocation(`/celebrate/${profile.id}`), 1500);
+          }
+          return;
+        }
+        const tp = Math.min(BUBBLE_COUNT, Math.floor(tileEasing(el / TOTAL_TIME) * BUBBLE_COUNT));
+        if (tp > poppedCountRef.current) {
+          const np = new Set<number>();
+          for (let i = 0; i < tp; i++) np.add(popOrderRef.current[i]);
+          poppedCountRef.current = tp;
+          setPoppedBubbles(np);
+        }
+      }, 100);
+    } catch {
+      localStorage.removeItem(RESUME_KEY);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, profile?.id]);
+
   // iOS requires a user gesture to unlock the Web Audio context.
-  // This listener primes it on the very first touch anywhere on the page.
   useEffect(() => {
     const unlock = () => {
       const silence = new Audio("data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRwTHAAAAAAAAAAAAAAAAAAAA//tQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
@@ -101,6 +148,13 @@ export default function Brush() {
   }, []);
 
   const startBrushing = useCallback(() => {
+    // Guard: no photo uploaded yet
+    if (!profile?.imageBase64) {
+      setNoPhotoMsg(true);
+      setTimeout(() => setNoPhotoMsg(false), 3500);
+      return;
+    }
+
     popOrderRef.current = shuffleArray(BUBBLE_COUNT);
     poppedCountRef.current = 0;
     navigatedRef.current = false;
@@ -108,27 +162,25 @@ export default function Brush() {
     setTimeLeft(TOTAL_TIME);
     setIsBrushing(true);
 
+    // Persist session so it can resume if the user navigates away
+    const now = Date.now();
+    localStorage.setItem(RESUME_KEY, JSON.stringify({ startedAt: now, kidId: profile.id }));
+
     // Audio: create AND play in the same synchronous tap handler for iOS
     if (!muted) {
       try {
-        // Always create a fresh Audio object on each start for iOS reliability
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current.src = "";
-        }
-        console.log("AUDIO DEBUG: muted =", muted, "creating audio...");
+        if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
         const audio = new Audio("/brush-song-v2.m4a");
         audio.volume = 0.5;
         audio.loop = false;
         audioRef.current = audio;
         audio.play().catch((err) => console.warn("Audio play failed:", err));
-        console.log("AUDIO DEBUG: play() called successfully");
       } catch (e) {
         console.warn("Audio creation failed:", e);
       }
     }
 
-    startTimeRef.current = Date.now();
+    startTimeRef.current = now;
 
     intervalRef.current = window.setInterval(() => {
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
@@ -138,15 +190,11 @@ export default function Brush() {
       if (remaining <= 0) {
         clearInterval(intervalRef.current!);
         intervalRef.current = null;
+        localStorage.removeItem(RESUME_KEY);
         setPoppedBubbles(new Set(Array.from({ length: BUBBLE_COUNT }, (_, i) => i)));
         if (!navigatedRef.current) {
           navigatedRef.current = true;
-          // Reuse the existing audio element for the fanfare
-          // iOS only allows one Audio element to play — swapping src on
-          // the already-unlocked element avoids the restriction
-          if (audioRef.current) {
-            audioRef.current.pause();
-          }
+          if (audioRef.current) audioRef.current.pause();
           setTimeout(() => setLocation(`/celebrate/${params.id}`), 1500);
         }
         return;
@@ -165,7 +213,7 @@ export default function Brush() {
         setPoppedBubbles(newPopped);
       }
     }, 100);
-  }, [params.id, setLocation, muted]);
+  }, [params.id, setLocation, muted, profile?.id, profile?.imageBase64]);
 
   useEffect(() => {
     return () => {
@@ -179,6 +227,7 @@ export default function Brush() {
 
   const handleCancel = () => {
     if (confirm("Stop brushing? You'll lose your progress!")) {
+      localStorage.removeItem(RESUME_KEY);
       stopTimer();
       setLocation("/");
     }
@@ -259,10 +308,30 @@ export default function Brush() {
         </AnimatePresence>
       </div>
 
+      {/* No-photo toast */}
+      <AnimatePresence>
+        {noPhotoMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="absolute top-24 left-4 right-4 z-30 bg-white rounded-2xl shadow-xl px-5 py-4 flex items-center gap-3"
+          >
+            <span className="text-2xl">📷</span>
+            <p className="font-bold text-foreground text-sm leading-snug">
+              Add a surprise photo first — your child will love it!
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* UI Overlay */}
       <div className="absolute inset-0 z-20 flex flex-col justify-between pointer-events-none">
         <div className="p-4 flex justify-between items-start pointer-events-auto">
-          <button onClick={handleCancel} className="p-3 bg-black/30 backdrop-blur-md rounded-full text-white">
+          <button
+            onClick={handleCancel}
+            className="p-3 bg-black/30 backdrop-blur-md rounded-full text-white active:scale-95 transition-all"
+          >
             <X className="w-6 h-6" />
           </button>
 
@@ -270,7 +339,13 @@ export default function Brush() {
             <div className="flex flex-col items-center">
               <div className="bg-black/40 backdrop-blur-md rounded-full py-2 px-4 flex gap-1 mb-2">
                 {Array.from({ length: totalIcons }).map((_, i) => (
-                  <motion.span key={i} animate={{ opacity: i < iconsRemaining ? 1 : 0.2, scale: i < iconsRemaining ? 1 : 0.8 }} className="text-xl">🦷</motion.span>
+                  <motion.span
+                    key={i}
+                    animate={{ opacity: i < iconsRemaining ? 1 : 0.2, scale: i < iconsRemaining ? 1 : 0.8 }}
+                    className="text-xl"
+                  >
+                    🦷
+                  </motion.span>
                 ))}
               </div>
               <div className="bg-primary text-white font-black text-2xl py-1 px-4 rounded-2xl shadow-lg border-2 border-white/20">
@@ -289,7 +364,7 @@ export default function Brush() {
                 else if (isBrushing) audioRef.current.play().catch(() => {});
               }
             }}
-            className="p-3 bg-black/30 backdrop-blur-md rounded-full text-white"
+            className="p-3 bg-black/30 backdrop-blur-md rounded-full text-white active:scale-95 transition-all"
           >
             <span className="text-lg">{muted ? "🔇" : "🔊"}</span>
           </button>

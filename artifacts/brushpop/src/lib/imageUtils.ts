@@ -1,5 +1,13 @@
+export class ImageTooLargeError extends Error {
+  constructor() { super("FILE_TOO_LARGE"); }
+}
+
 export function processImageFile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
+    if (file.size > 5 * 1024 * 1024) {
+      reject(new ImageTooLargeError());
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
