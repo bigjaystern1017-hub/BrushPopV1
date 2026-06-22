@@ -501,7 +501,7 @@ export default function Brush() {
               src="/assets/Bubble_Pop_Mascot.png"
               alt=""
               draggable={false}
-              style={{ height: 100, width: "auto", display: "block" }}
+              style={{ height: 80, width: "auto", display: "block" }}
             />
           </div>
         </div>
