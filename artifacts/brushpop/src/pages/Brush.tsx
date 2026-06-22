@@ -93,6 +93,7 @@ export default function Brush() {
   const [noPhotoMsg, setNoPhotoMsg] = useState(false);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [msgIndex, setMsgIndex] = useState(0);
+  const [mascotState, setMascotState] = useState<{ fromLeft: boolean } | null>(null);
 
   const bubbles = useMemo(() => generateBubbles(BUBBLE_COUNT), []);
 
@@ -105,6 +106,11 @@ export default function Brush() {
   const particleIdRef = useRef(0);
   const msgIntervalRef = useRef<number | null>(null);
   const prevUrgentRef = useRef(false);
+  // Mascot cameo timing — randomised per session
+  const cameo1ElapsedRef = useRef(0); // seconds elapsed when first cameo fires (45–60s)
+  const cameo2ElapsedRef = useRef(0); // seconds elapsed when second cameo fires (90–105s)
+  const cameo1FiredRef = useRef(false);
+  const cameo2FiredRef = useRef(false);
 
   // Derived state
   const isUrgent = isBrushing && timeLeft > 0 && timeLeft <= URGENCY_THRESHOLD;
@@ -171,6 +177,17 @@ export default function Brush() {
         const el = (Date.now() - startedAt) / 1000;
         const rem = Math.max(0, TOTAL_TIME - el);
         setTimeLeft(Math.ceil(rem));
+        // Mascot cameos in resumed session
+        if (!cameo1FiredRef.current && rem > URGENCY_THRESHOLD && el >= cameo1ElapsedRef.current) {
+          cameo1FiredRef.current = true;
+          setMascotState({ fromLeft: true });
+          setTimeout(() => setMascotState(null), 3500);
+        }
+        if (!cameo2FiredRef.current && rem > URGENCY_THRESHOLD && el >= cameo2ElapsedRef.current) {
+          cameo2FiredRef.current = true;
+          setMascotState({ fromLeft: false });
+          setTimeout(() => setMascotState(null), 3500);
+        }
         if (rem <= 0) {
           clearInterval(intervalRef.current!);
           intervalRef.current = null;
@@ -191,6 +208,12 @@ export default function Brush() {
           setPoppedBubbles(np);
         }
       }, 100);
+
+      // Set cameo trigger times — mark already-fired if elapsed time has passed the window
+      cameo1ElapsedRef.current = 45 + Math.random() * 15;
+      cameo2ElapsedRef.current = 90 + Math.random() * 15;
+      cameo1FiredRef.current = elapsed >= cameo1ElapsedRef.current;
+      cameo2FiredRef.current = elapsed >= cameo2ElapsedRef.current;
     } catch {
       localStorage.removeItem(RESUME_KEY);
     }
@@ -230,6 +253,11 @@ export default function Brush() {
     setTimeLeft(TOTAL_TIME);
     setMsgIndex(0);
     prevUrgentRef.current = false;
+    // Randomise cameo trigger times for this session
+    cameo1ElapsedRef.current = 45 + Math.random() * 15; // 45–60s elapsed
+    cameo2ElapsedRef.current = 90 + Math.random() * 15; // 90–105s elapsed
+    cameo1FiredRef.current = false;
+    cameo2FiredRef.current = false;
     setIsBrushing(true);
 
     const now = Date.now();
@@ -254,6 +282,18 @@ export default function Brush() {
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
       const remaining = Math.max(0, TOTAL_TIME - elapsed);
       setTimeLeft(Math.ceil(remaining));
+
+      // Mascot cameos — only trigger outside urgency mode
+      if (!cameo1FiredRef.current && remaining > URGENCY_THRESHOLD && elapsed >= cameo1ElapsedRef.current) {
+        cameo1FiredRef.current = true;
+        setMascotState({ fromLeft: true });
+        setTimeout(() => setMascotState(null), 3500);
+      }
+      if (!cameo2FiredRef.current && remaining > URGENCY_THRESHOLD && elapsed >= cameo2ElapsedRef.current) {
+        cameo2FiredRef.current = true;
+        setMascotState({ fromLeft: false });
+        setTimeout(() => setMascotState(null), 3500);
+      }
 
       if (remaining <= 0) {
         clearInterval(intervalRef.current!);
@@ -330,6 +370,21 @@ export default function Brush() {
 
   return (
     <div className="h-[100dvh] w-full max-w-md mx-auto bg-black relative overflow-hidden flex flex-col">
+      <style>{`
+        @keyframes mascot-slide-ltr {
+          from { left: -130px; }
+          to   { left: calc(100vw + 30px); }
+        }
+        @keyframes mascot-slide-rtl {
+          from { left: calc(100vw + 30px); }
+          to   { left: -130px; }
+        }
+        @keyframes mascot-bob {
+          0%, 100% { transform: translateY(0px); }
+          50%      { transform: translateY(-12px); }
+        }
+      `}</style>
+
       {/* Hidden photo underneath */}
       <div className="absolute inset-0 z-0">
         <img src={profile.imageBase64} alt="Hidden" className="w-full h-full object-contain" />
@@ -428,6 +483,29 @@ export default function Brush() {
           ))}
         </div>
       ))}
+
+      {/* Mascot cameo — pure CSS keyframe, pointer-events-none, z-16 (above bubbles, below UI) */}
+      {mascotState && (
+        <div
+          className="pointer-events-none"
+          style={{
+            position: "fixed",
+            top: "38%",
+            zIndex: 16,
+            animation: `${mascotState.fromLeft ? "mascot-slide-ltr" : "mascot-slide-rtl"} 3s linear forwards`,
+            ...(mascotState.fromLeft ? {} : { transform: "scaleX(-1)" }),
+          }}
+        >
+          <div style={{ animation: "mascot-bob 0.4s ease-in-out infinite" }}>
+            <img
+              src="/assets/Bubble_Pop_Mascot.png"
+              alt=""
+              draggable={false}
+              style={{ height: 100, width: "auto", display: "block" }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* No-photo toast */}
       <AnimatePresence>
