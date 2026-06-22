@@ -1,0 +1,47 @@
+Four targeted polish changes to BrushPop:
+1. App icon — most urgent
+
+Replace the current PWA icon with a full-bleed app icon. Do not use the horizontal BrushPop wordmark logo inside a white square — it becomes illegible at home screen size.
+Create a new app icon that:
+
+Has a full-bleed rounded square background using a gradient from BrushPop blue #0EA5E9 to pink #FF6B7A
+Features the smiling tooth mascot from the BrushPop logo, large and centered, taking up at least 70% of the icon area
+Has no white border or empty white space around the edges
+Optionally includes small 'BP' lettering only if it remains legible at 60x60px
+Feels glossy, playful, and professional — comparable to PBS Kids or other children's app icons
+
+Generate all required PWA icon sizes: 192x192, 512x512, apple-touch-icon at 180x180, and favicon. Update the web app manifest so iOS uses the new icon when added to the home screen. Users will need to delete and re-add the app to their home screen to see the updated icon.
+2. Splash screen
+
+Keep everything but make these specific changes:
+
+Increase the BrushPop logo size by 35% — it should feel like it owns the screen
+Move it slightly upward, centering it at around 42% from the top rather than dead center
+Move the tagline 'Pop the plaque. Reveal the prize.' so it sits closer to the logo — reduce the gap between them significantly
+Add a very subtle soft white radial glow behind the logo so it lifts off the blue background
+Add a gentle scale-in animation on load: logo scales from 0.96 to 1.0 over 400ms with ease-out
+
+3. Home screen — 'Who's brushing tonight?' polish
+
+Three specific changes only, do not restructure the layout:
+
+Change 'WHO'S BRUSHING TONIGHT?' from all-caps spaced tracking to title case 'Who's brushing tonight?' — reduce letter spacing, keep it bold and friendly
+Add a slightly stronger drop shadow to the kid profile cards to give them more elevation and make them feel more tappable
+Make the 'Add Kid' dashed card slightly more opaque and the plus button more saturated so it reads as intentional rather than disabled
+
+4. Dentist branding module
+
+Upgrade the 'Your Pediatric Dentist / Tap to learn more' footer into a proper white-label placement module:
+
+Place it inside a soft white translucent rounded pill/card
+Add a small circular logo placeholder on the left side
+Change the text structure to:
+
+Small label above: 'Presented by' in muted small text
+Main line: 'Your Pediatric Dentist' — this should be the strongest text in the module
+Subtext below: 'Tap for office info'
+
+
+Increase overall contrast so it reads clearly but still feels tasteful
+Keep it above the legal/copyright footer
+Make the whole module tappable and link it to the About Our Practice screen

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trophy, Settings, Flame, Camera, Info, X, ShieldCheck } from "lucide-react";
+import { Plus, Trophy, Settings, Flame, Camera, X, ShieldCheck, ChevronRight } from "lucide-react";
 import { useProfiles } from "@/lib/useProfiles";
 import { useSessions } from "@/lib/useSessions";
 import { CLINIC } from "@/lib/clinicConfig";
@@ -84,7 +84,8 @@ export default function KidSelect() {
           </div>
         ) : (
           <div className="w-full flex flex-col gap-4 px-4 pb-8">
-            <p className="text-center text-sm font-bold text-muted-foreground uppercase tracking-widest mb-2">
+            {/* Section label — title case, friendlier */}
+            <p className="text-center text-sm font-bold text-muted-foreground tracking-wide mb-2">
               Who's brushing tonight?
             </p>
 
@@ -94,7 +95,7 @@ export default function KidSelect() {
                   key={profile.id}
                   whileTap={{ scale: 0.96 }}
                   data-testid={`card-kid-${profile.id}`}
-                  className="bg-white rounded-3xl shadow-md overflow-hidden cursor-pointer border-2 border-white hover:border-primary/30 transition-colors"
+                  className="bg-white rounded-3xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_6px_rgba(0,0,0,0.07)] overflow-hidden cursor-pointer border-2 border-white hover:border-primary/30 transition-colors"
                   onClick={() => handleBrushTap(profile)}
                 >
                   {/* Accent strip */}
@@ -124,7 +125,6 @@ export default function KidSelect() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-1.5 px-2.5 py-2 bg-white">
-                    {/* Streak badge */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -173,42 +173,66 @@ export default function KidSelect() {
                 </motion.div>
               ))}
 
-              {/* Add kid card */}
+              {/* Add kid card — more intentional appearance */}
               <motion.div
                 whileTap={{ scale: 0.96 }}
                 onClick={() => setLocation("/setup")}
                 data-testid="button-add-another-kid"
-                className="bg-white/60 rounded-3xl border-3 border-dashed border-primary/25 flex flex-col items-center justify-center cursor-pointer min-h-[220px] gap-3"
+                className="bg-white/85 rounded-3xl border-2 border-dashed border-primary/40 flex flex-col items-center justify-center cursor-pointer min-h-[220px] gap-3"
               >
-                <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary shadow-sm">
+                <div className="w-14 h-14 bg-primary/25 rounded-full flex items-center justify-center text-primary shadow-md">
                   <Plus className="w-7 h-7" />
                 </div>
-                <span className="font-black text-primary/60 text-sm">Add Kid</span>
+                <span className="font-black text-primary/70 text-sm">Add Kid</span>
               </motion.div>
             </div>
           </div>
         )}
 
         {/* Footer */}
-        <div className="w-full text-center py-6 px-4 mt-auto">
+        <div className="w-full py-6 px-4 mt-auto flex flex-col items-center gap-3">
+
+          {/* Clinic branding module */}
           {CLINIC.showBranding && (
             <button
               onClick={() => setLocation("/about")}
               data-testid="button-about"
-              className="mb-3 py-3 px-5 bg-white/40 backdrop-blur-sm rounded-2xl inline-flex items-center gap-2 active:scale-95 transition-all"
+              className="w-full bg-white/85 backdrop-blur-sm rounded-2xl px-4 py-3.5 flex items-center gap-3 active:scale-95 transition-all shadow-sm"
             >
-              <Info className="w-3.5 h-3.5 text-foreground/40" />
-              <span>
-                <p className="text-foreground/50 font-bold text-xs text-left">
+              {/* Logo circle */}
+              <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-white shadow-sm">
+                {CLINIC.logoUrl ? (
+                  <img
+                    src={CLINIC.logoUrl}
+                    alt={CLINIC.name}
+                    className="w-full h-full object-contain p-1"
+                  />
+                ) : (
+                  <span className="text-primary font-black text-lg">
+                    {CLINIC.name.charAt(0)}
+                  </span>
+                )}
+              </div>
+
+              {/* Text block */}
+              <div className="flex-1 text-left">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">
+                  Presented by
+                </p>
+                <p className="text-sm font-black text-foreground leading-tight">
                   {CLINIC.name}
                 </p>
-                <p className="text-foreground/35 text-[11px] mt-0.5 text-left">
-                  Tap to learn more
+                <p className="text-[11px] text-muted-foreground mt-0.5 leading-none">
+                  Tap for office info
                 </p>
-              </span>
+              </div>
+
+              <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             </button>
           )}
-          <p className="text-[10px] text-foreground/30 leading-relaxed">
+
+          {/* Legal footer */}
+          <p className="text-[10px] text-foreground/30 leading-relaxed text-center">
             © 2026 Brighter Mind Labs. All rights reserved.
             <br />
             BrushPop™ is a product of Brighter Mind Labs.
@@ -222,7 +246,7 @@ export default function KidSelect() {
               Privacy Policy
             </span>
           </p>
-          <p className="text-[10px] text-foreground/20 mt-1 font-medium">v1.0</p>
+          <p className="text-[10px] text-foreground/20 font-medium">v1.0</p>
         </div>
       </motion.div>
 
