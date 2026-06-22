@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trophy, Settings, Flame, Camera, X, ShieldCheck, ChevronRight } from "lucide-react";
+import { Plus, Trophy, Settings, Flame, Camera, X, ShieldCheck } from "lucide-react";
 import { useProfiles } from "@/lib/useProfiles";
 import { useSessions } from "@/lib/useSessions";
 import { CLINIC } from "@/lib/clinicConfig";
@@ -50,13 +50,36 @@ export default function KidSelect() {
         className="min-h-screen bg-transparent flex flex-col items-center max-w-md mx-auto"
       >
         {/* Header */}
-        <div className="w-full text-center pt-10 pb-8 px-6">
+        <div className="w-full text-center pt-10 pb-6 px-6 flex flex-col items-center">
           <img
             src="/brushpop-logo.png"
             alt="BrushPop"
-            className="h-[246px] mx-auto mb-2 drop-shadow-lg"
+            className="h-[246px] mx-auto mb-3 drop-shadow-lg"
           />
-          <p className="text-foreground/60 font-bold text-base mt-1">Pop the plaque. Reveal the prize.</p>
+
+          {/* Dentist branding pill — second thing a parent sees */}
+          {CLINIC.showBranding && (
+            <div className="flex items-center gap-3 bg-white/82 backdrop-blur-sm rounded-full px-4 py-2.5 shadow-md">
+              {/* Clinic logo circle */}
+              <div className="w-9 h-9 rounded-full bg-sky-50 border-2 border-white/80 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+                {CLINIC.logoUrl ? (
+                  <img src={CLINIC.logoUrl} alt={CLINIC.name} className="w-full h-full object-contain p-0.5" />
+                ) : (
+                  <span className="text-xl leading-none">🦷</span>
+                )}
+              </div>
+
+              {/* Text */}
+              <div className="text-left pr-1">
+                <p className="text-[10px] font-semibold text-foreground/50 uppercase tracking-wide leading-none mb-0.5">
+                  Presented by
+                </p>
+                <p className="text-base font-black text-foreground leading-tight">
+                  {CLINIC.name}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {profiles.length === 0 ? (
@@ -191,45 +214,6 @@ export default function KidSelect() {
 
         {/* Footer */}
         <div className="w-full py-6 px-4 mt-auto flex flex-col items-center gap-3">
-
-          {/* Clinic branding module */}
-          {CLINIC.showBranding && (
-            <button
-              onClick={() => setLocation("/about")}
-              data-testid="button-about"
-              className="w-full bg-white/85 backdrop-blur-sm rounded-2xl px-4 py-3.5 flex items-center gap-3 active:scale-95 transition-all shadow-sm"
-            >
-              {/* Logo circle */}
-              <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-white shadow-sm">
-                {CLINIC.logoUrl ? (
-                  <img
-                    src={CLINIC.logoUrl}
-                    alt={CLINIC.name}
-                    className="w-full h-full object-contain p-1"
-                  />
-                ) : (
-                  <span className="text-primary font-black text-lg">
-                    {CLINIC.name.charAt(0)}
-                  </span>
-                )}
-              </div>
-
-              {/* Text block */}
-              <div className="flex-1 text-left">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">
-                  Presented by
-                </p>
-                <p className="text-sm font-black text-foreground leading-tight">
-                  {CLINIC.name}
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-0.5 leading-none">
-                  Tap for office info
-                </p>
-              </div>
-
-              <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-            </button>
-          )}
 
           {/* Legal footer */}
           <p className="text-[10px] text-foreground/30 leading-relaxed text-center">

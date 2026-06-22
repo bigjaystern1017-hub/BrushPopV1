@@ -81,26 +81,44 @@ export default function Splash({ onComplete }: SplashProps) {
             />
           </div>
 
-          {/* Tagline — tight gap beneath logo */}
+          {/* Dentist branding pill — directly below logo */}
+          {CLINIC.showBranding && (
+            <motion.div
+              className="flex items-center gap-3 bg-white/82 backdrop-blur-sm rounded-full px-4 py-2.5 shadow-md mt-3 relative z-10"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45, duration: 0.4, ease: "easeOut" }}
+            >
+              {/* Clinic logo circle */}
+              <div className="w-9 h-9 rounded-full bg-sky-50 border-2 border-white/80 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+                {CLINIC.logoUrl ? (
+                  <img src={CLINIC.logoUrl} alt={CLINIC.name} className="w-full h-full object-contain p-0.5" />
+                ) : (
+                  <span className="text-xl leading-none">🦷</span>
+                )}
+              </div>
+
+              {/* Text */}
+              <div className="text-left pr-1">
+                <p className="text-[10px] font-semibold text-foreground/50 uppercase tracking-wide leading-none mb-0.5">
+                  Presented by
+                </p>
+                <p className="text-base font-black text-foreground leading-tight">
+                  {CLINIC.name}
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Tagline — below branding pill */}
           <motion.p
-            className="text-foreground/60 font-bold text-lg mt-2 relative z-10"
+            className="text-foreground/60 font-bold text-lg mt-3 relative z-10"
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.4 }}
+            transition={{ delay: 0.6, duration: 0.4 }}
           >
             Pop the plaque. Reveal the prize.
           </motion.p>
-
-          {CLINIC.showBranding && (
-            <motion.p
-              className="text-foreground/40 font-semibold text-sm mt-5 relative z-10"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.9, duration: 0.4 }}
-            >
-              Brought to you by {CLINIC.name}
-            </motion.p>
-          )}
         </motion.div>
       )}
     </AnimatePresence>
