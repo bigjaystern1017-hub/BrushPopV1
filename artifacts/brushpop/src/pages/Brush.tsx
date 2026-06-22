@@ -7,6 +7,33 @@ import { useProfiles } from "@/lib/useProfiles";
 const TOTAL_TIME = 120;
 const BUBBLE_COUNT = 160;
 const RESUME_KEY = "brushpop_resume";
+const URGENCY_THRESHOLD = 15;
+const MSG_INTERVAL_MS = 8000;
+
+const PARTICLE_ANGLES = Array.from({ length: 6 }, (_, i) => (i * 60 * Math.PI) / 180);
+const PARTICLE_COLORS = ["#FF6B7A", "#FFFFFF", "#A8EDFF", "#FFD6DC", "#FFFFFF", "#FF6B7A"];
+
+function getNormalMessages(name: string): string[] {
+  return [
+    "Keep brushing — the surprise is coming!",
+    `You got this, ${name}! 🦷`,
+    "Your teeth are getting SO clean!",
+    `Almost halfway there, ${name}!`,
+    "The surprise is hiding behind the bubbles!",
+    `Pop more bubbles, ${name}! 🫧`,
+    "You're doing amazing!",
+    "Every bubble you pop = cleaner teeth!",
+    "Keep going — it's worth it!",
+    "Your dentist would be so proud right now!",
+  ];
+}
+
+const URGENCY_MESSAGES = [
+  "Almost there!",
+  "Last few seconds!",
+  "You're so close!",
+  "Keep going!!",
+];
 
 function generateBubbles(count: number): { id: number; x: number; y: number; size: number; hue: number; delay: number }[] {
   const bubbles: { id: number; x: number; y: number; size: number; hue: number; delay: number }[] = [];
@@ -47,6 +74,12 @@ function shuffleArray(length: number): number[] {
   return order;
 }
 
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+}
+
 export default function Brush() {
   const [, setLocation] = useLocation();
   const params = useParams();
@@ -58,6 +91,8 @@ export default function Brush() {
   const [poppedBubbles, setPoppedBubbles] = useState<Set<number>>(new Set());
   const [muted, setMuted] = useState(() => localStorage.getItem("brushpop_muted") === "true");
   const [noPhotoMsg, setNoPhotoMsg] = useState(false);
+  const [particles, setParticles] = useState<Particle[]>([]);
+  const [msgIndex, setMsgIndex] = useState(0);
 
   const bubbles = useMemo(() => generateBubbles(BUBBLE_COUNT), []);
 
@@ -67,13 +102,48 @@ export default function Brush() {
   const poppedCountRef = useRef<number>(0);
   const navigatedRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const particleIdRef = useRef(0);
+  const msgIntervalRef = useRef<number | null>(null);
+  const prevUrgentRef = useRef(false);
+
+  // Derived state
+  const isUrgent = isBrushing && timeLeft > 0 && timeLeft <= URGENCY_THRESHOLD;
+
+  const normalMessages = useMemo(
+    () => (profile ? getNormalMessages(profile.name) : []),
+    [profile?.name]  // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const currentMsg = isUrgent
+    ? URGENCY_MESSAGES[msgIndex % URGENCY_MESSAGES.length]
+    : (normalMessages[msgIndex % normalMessages.length] ?? "Keep brushing!");
 
   // Navigate home if profile not found
   useEffect(() => {
     if (loaded && !profile) setLocation("/");
   }, [loaded, profile, setLocation]);
 
-  // Session resume: check localStorage for an interrupted session after profile confirms loaded
+  // Message rotation — starts when brushing begins
+  useEffect(() => {
+    if (!isBrushing) return;
+    msgIntervalRef.current = window.setInterval(
+      () => setMsgIndex((i) => i + 1),
+      MSG_INTERVAL_MS
+    );
+    return () => {
+      if (msgIntervalRef.current) clearInterval(msgIntervalRef.current);
+    };
+  }, [isBrushing]);
+
+  // Reset msg index when urgency kicks in (start fresh from urgency pool)
+  useEffect(() => {
+    if (isUrgent && !prevUrgentRef.current) {
+      setMsgIndex(0);
+    }
+    prevUrgentRef.current = isUrgent;
+  }, [isUrgent]);
+
+  // Session resume
   useEffect(() => {
     if (!loaded || !profile) return;
     try {
@@ -88,7 +158,6 @@ export default function Brush() {
         setLocation(`/celebrate/${profile.id}`);
         return;
       }
-      // Pre-populate bubble state to match elapsed time
       const initialPopped = Math.min(BUBBLE_COUNT, Math.floor(tileEasing(elapsed / TOTAL_TIME) * BUBBLE_COUNT));
       const initialSet = new Set<number>();
       for (let i = 0; i < initialPopped; i++) initialSet.add(popOrderRef.current[i]);
@@ -128,7 +197,7 @@ export default function Brush() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded, profile?.id]);
 
-  // iOS requires a user gesture to unlock the Web Audio context.
+  // iOS audio unlock
   useEffect(() => {
     const unlock = () => {
       const silence = new Audio("data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRwTHAAAAAAAAAAAAAAAAAAAA//tQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
@@ -148,7 +217,6 @@ export default function Brush() {
   }, []);
 
   const startBrushing = useCallback(() => {
-    // Guard: no photo uploaded yet
     if (!profile?.imageBase64) {
       setNoPhotoMsg(true);
       setTimeout(() => setNoPhotoMsg(false), 3500);
@@ -160,13 +228,13 @@ export default function Brush() {
     navigatedRef.current = false;
     setPoppedBubbles(new Set());
     setTimeLeft(TOTAL_TIME);
+    setMsgIndex(0);
+    prevUrgentRef.current = false;
     setIsBrushing(true);
 
-    // Persist session so it can resume if the user navigates away
     const now = Date.now();
     localStorage.setItem(RESUME_KEY, JSON.stringify({ startedAt: now, kidId: profile.id }));
 
-    // Audio: create AND play in the same synchronous tap handler for iOS
     if (!muted) {
       try {
         if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
@@ -206,9 +274,7 @@ export default function Brush() {
 
       if (targetPopped > poppedCountRef.current) {
         const newPopped = new Set<number>();
-        for (let i = 0; i < targetPopped; i++) {
-          newPopped.add(popOrderRef.current[i]);
-        }
+        for (let i = 0; i < targetPopped; i++) newPopped.add(popOrderRef.current[i]);
         poppedCountRef.current = targetPopped;
         setPoppedBubbles(newPopped);
       }
@@ -218,10 +284,7 @@ export default function Brush() {
   useEffect(() => {
     return () => {
       stopTimer();
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = "";
-      }
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
     };
   }, [stopTimer]);
 
@@ -232,6 +295,25 @@ export default function Brush() {
       setLocation("/");
     }
   };
+
+  // Particle burst — fires on any tap of the bubble overlay
+  const spawnParticle = useCallback((clientX: number, clientY: number, rect: DOMRect) => {
+    if (!isBrushing) return;
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    const id = ++particleIdRef.current;
+    setParticles((p) => [...p, { id, x, y }]);
+    setTimeout(() => setParticles((p) => p.filter((pt) => pt.id !== id)), 500);
+  }, [isBrushing]);
+
+  const handleBubbleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length === 0) return;
+    spawnParticle(e.touches[0].clientX, e.touches[0].clientY, e.currentTarget.getBoundingClientRect());
+  }, [spawnParticle]);
+
+  const handleBubbleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    spawnParticle(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect());
+  }, [spawnParticle]);
 
   if (!loaded) return (
     <div className="h-[100dvh] w-full max-w-md mx-auto bg-black flex items-center justify-center">
@@ -253,8 +335,12 @@ export default function Brush() {
         <img src={profile.imageBase64} alt="Hidden" className="w-full h-full object-contain" />
       </div>
 
-      {/* Bubble overlay */}
-      <div className="absolute inset-0 z-10 overflow-hidden">
+      {/* Bubble overlay — tap anywhere to get a particle burst */}
+      <div
+        className="absolute inset-0 z-10 overflow-hidden"
+        onTouchStart={handleBubbleTouchStart}
+        onClick={handleBubbleClick}
+      >
         <AnimatePresence>
           {bubbles.map((bubble) =>
             !poppedBubbles.has(bubble.id) ? (
@@ -263,12 +349,14 @@ export default function Brush() {
                 exit={{
                   scale: [1, 1.3, 0],
                   opacity: [1, 0.8, 0],
+                  transition: { duration: 0.4, times: [0, 0.3, 1], ease: "easeOut" },
                 }}
-                transition={{
-                  duration: 0.4,
-                  times: [0, 0.3, 1],
-                  ease: "easeOut",
-                }}
+                animate={isUrgent ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+                transition={
+                  isUrgent
+                    ? { scale: { duration: 0.5, repeat: Infinity, ease: "easeInOut" } }
+                    : { scale: { duration: 0.2 } }
+                }
                 style={{
                   position: "absolute",
                   left: `${bubble.x}%`,
@@ -282,14 +370,16 @@ export default function Brush() {
                     hsla(${bubble.hue}, 75%, 78%, 1) 40%, 
                     hsla(${bubble.hue}, 70%, 65%, 1) 70%, 
                     hsla(${bubble.hue}, 65%, 55%, 1) 100%)`,
-                  boxShadow: `
-                    inset -2px -3px 6px hsla(${bubble.hue}, 60%, 40%, 0.3),
-                    inset 3px 3px 8px hsla(${bubble.hue}, 90%, 95%, 0.6),
-                    0 2px 8px hsla(${bubble.hue}, 60%, 40%, 0.15)
-                  `,
+                  boxShadow: isUrgent
+                    ? `inset -2px -3px 6px hsla(${bubble.hue}, 60%, 40%, 0.3),
+                       inset 3px 3px 8px hsla(${bubble.hue}, 90%, 95%, 0.6),
+                       0 0 14px 5px rgba(255, 45, 75, 0.55),
+                       0 2px 8px hsla(${bubble.hue}, 60%, 40%, 0.15)`
+                    : `inset -2px -3px 6px hsla(${bubble.hue}, 60%, 40%, 0.3),
+                       inset 3px 3px 8px hsla(${bubble.hue}, 90%, 95%, 0.6),
+                       0 2px 8px hsla(${bubble.hue}, 60%, 40%, 0.15)`,
                 }}
               >
-                {/* Shine highlight */}
                 <div
                   style={{
                     position: "absolute",
@@ -307,6 +397,37 @@ export default function Brush() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Particle bursts — between bubbles and UI overlay */}
+      {particles.map((pt) => (
+        <div
+          key={pt.id}
+          className="absolute z-[15] pointer-events-none"
+          style={{ left: pt.x, top: pt.y }}
+        >
+          {PARTICLE_ANGLES.map((angle, i) => (
+            <motion.div
+              key={i}
+              initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+              animate={{
+                x: Math.cos(angle) * 26,
+                y: Math.sin(angle) * 26,
+                opacity: 0,
+                scale: 0.3,
+              }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              style={{
+                position: "absolute",
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: PARTICLE_COLORS[i % PARTICLE_COLORS.length],
+                transform: "translate(-50%, -50%)",
+              }}
+            />
+          ))}
+        </div>
+      ))}
 
       {/* No-photo toast */}
       <AnimatePresence>
@@ -328,6 +449,7 @@ export default function Brush() {
       {/* UI Overlay */}
       <div className="absolute inset-0 z-20 flex flex-col justify-between pointer-events-none">
         <div className="p-4 flex justify-between items-start pointer-events-auto">
+          {/* Cancel */}
           <button
             onClick={handleCancel}
             className="p-3 bg-black/30 backdrop-blur-md rounded-full text-white active:scale-95 transition-all"
@@ -335,8 +457,10 @@ export default function Brush() {
             <X className="w-6 h-6" />
           </button>
 
+          {/* Timer area */}
           {isBrushing && (
             <div className="flex flex-col items-center">
+              {/* Tooth progress icons */}
               <div className="bg-black/40 backdrop-blur-md rounded-full py-2 px-4 flex gap-1 mb-2">
                 {Array.from({ length: totalIcons }).map((_, i) => (
                   <motion.span
@@ -348,12 +472,25 @@ export default function Brush() {
                   </motion.span>
                 ))}
               </div>
-              <div className="bg-primary text-white font-black text-2xl py-1 px-4 rounded-2xl shadow-lg border-2 border-white/20">
+
+              {/* Timer pill — turns red and pulses in urgency mode */}
+              <motion.div
+                animate={isUrgent ? { scale: [1, 1.06, 1] } : { scale: 1 }}
+                transition={
+                  isUrgent
+                    ? { scale: { duration: 0.4, repeat: Infinity, ease: "easeInOut" } }
+                    : {}
+                }
+                className={`font-black text-2xl py-1 px-4 rounded-2xl shadow-lg border-2 border-white/20 transition-colors duration-500 ${
+                  isUrgent ? "bg-red-500" : "bg-primary"
+                } text-white`}
+              >
                 {timeStr}
-              </div>
+              </motion.div>
             </div>
           )}
 
+          {/* Mute */}
           <button
             onClick={() => {
               const newMuted = !muted;
@@ -370,6 +507,7 @@ export default function Brush() {
           </button>
         </div>
 
+        {/* Bottom message area */}
         <div className="p-6 pb-safe pointer-events-auto bg-gradient-to-t from-black/80 via-black/40 to-transparent">
           {!isBrushing ? (
             <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-center">
@@ -386,7 +524,22 @@ export default function Brush() {
             </motion.div>
           ) : (
             <div className="text-center">
-              <h2 className="text-xl font-bold text-white mb-2 drop-shadow-md">Keep brushing — the surprise is coming!</h2>
+              {/* Rotating encouragement message — fades + scale-pops on change */}
+              <AnimatePresence mode="wait">
+                <motion.h2
+                  key={`${isUrgent ? "u" : "n"}-${msgIndex}`}
+                  initial={{ opacity: 0, scale: 0.97 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className={`text-xl font-bold mb-2 drop-shadow-md ${
+                    isUrgent ? "text-red-200" : "text-white"
+                  }`}
+                >
+                  {currentMsg}
+                </motion.h2>
+              </AnimatePresence>
+
               <p className="text-white/80 font-medium">Brush every tooth, {profile.name}! 🦷</p>
             </div>
           )}
