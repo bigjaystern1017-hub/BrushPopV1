@@ -492,16 +492,18 @@ export default function Brush() {
             position: "fixed",
             top: "38%",
             zIndex: 16,
+            background: "transparent",
+            backgroundColor: "transparent",
             animation: `${mascotState.fromLeft ? "mascot-slide-ltr" : "mascot-slide-rtl"} 3s linear forwards`,
             ...(mascotState.fromLeft ? {} : { transform: "scaleX(-1)" }),
           }}
         >
-          <div style={{ animation: "mascot-bob 0.4s ease-in-out infinite" }}>
+          <div style={{ animation: "mascot-bob 0.4s ease-in-out infinite", background: "transparent", backgroundColor: "transparent" }}>
             <img
               src="/assets/Bubble_Pop_Mascot.png"
               alt=""
               draggable={false}
-              style={{ height: 80, width: "auto", display: "block" }}
+              style={{ height: 80, width: "auto", display: "block", background: "transparent", backgroundColor: "transparent", mixBlendMode: "normal" }}
             />
           </div>
         </div>
