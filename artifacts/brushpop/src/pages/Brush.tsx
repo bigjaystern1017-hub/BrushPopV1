@@ -369,7 +369,7 @@ export default function Brush() {
   const iconsRemaining = Math.ceil((timeLeft / TOTAL_TIME) * totalIcons);
 
   return (
-    <div className="h-[100dvh] w-full max-w-md mx-auto bg-black relative overflow-hidden flex flex-col">
+    <div className="h-[100dvh] w-full max-w-md mx-auto relative overflow-hidden flex flex-col" style={{ backgroundColor: "#0A1628" }}>
       <style>{`
         @keyframes mascot-slide-ltr {
           from { left: -130px; }
@@ -390,11 +390,17 @@ export default function Brush() {
         <img src={profile.imageBase64} alt="Hidden" className="w-full h-full object-contain" />
       </div>
 
-      {/* Bubble overlay — tap anywhere to get a particle burst */}
+      {/* Event capture layer — full-screen transparent div handles all tap/click for particles */}
       <div
-        className="absolute inset-0 z-10 overflow-hidden"
+        className="absolute inset-0 z-10"
         onTouchStart={handleBubbleTouchStart}
         onClick={handleBubbleClick}
+      />
+
+      {/* Bubble visual layer — scaled 8% larger so bubbles reach every edge; pointer-events-none so taps pass through to capture layer above */}
+      <div
+        className="absolute inset-0 z-10 pointer-events-none"
+        style={{ transform: "scale(1.08)", transformOrigin: "center center" }}
       >
         <AnimatePresence>
           {bubbles.map((bubble) =>
