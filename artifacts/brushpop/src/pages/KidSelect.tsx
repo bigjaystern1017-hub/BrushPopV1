@@ -231,6 +231,12 @@ export default function KidSelect() {
             </span>
           </p>
           <p className="text-[10px] text-foreground/20 font-medium">v1.0</p>
+          <p
+            className="text-[10px] text-center leading-relaxed pb-3"
+            style={{ color: "#94A3B8" }}
+          >
+            BrushPop is for entertainment and educational purposes only. Not a medical device.
+          </p>
         </div>
       </motion.div>
 

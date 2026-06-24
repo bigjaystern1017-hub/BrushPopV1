@@ -116,8 +116,14 @@ export default function About() {
           Book an Appointment
         </motion.a>
 
-        <p className="text-center text-xs text-muted-foreground/60 font-medium leading-relaxed pb-6">
+        <p className="text-center text-xs text-muted-foreground/60 font-medium leading-relaxed">
           Powered by BrushPop™ — helping families build healthy habits one brush at a time.
+        </p>
+        <p
+          className="text-[10px] text-center leading-relaxed pb-6"
+          style={{ color: "#94A3B8" }}
+        >
+          BrushPop is for entertainment and educational purposes only. Not a medical device.
         </p>
       </div>
     </motion.div>
