@@ -10,6 +10,16 @@ const RESUME_KEY = "brushpop_resume";
 const URGENCY_THRESHOLD = 15;
 const MSG_INTERVAL_MS = 8000;
 
+// Timed visual stimulus schedule (seconds elapsed from session start)
+const SCURRIES: { elapsed: number; fromLeft: boolean; duration: number }[] = [
+  { elapsed: 20, fromLeft: true,  duration: 2.5 }, // 0:20 — left → right
+  { elapsed: 45, fromLeft: false, duration: 2.5 }, // 0:45 — right → left
+  { elapsed: 70, fromLeft: true,  duration: 2.0 }, // 1:10 — left → right, faster
+  { elapsed: 95, fromLeft: false, duration: 1.8 }, // 1:35 — right → left, fastest
+];
+const BUBBLE_PULSE_ELAPSED = 75; // 1:15 — ripple cascade across bubble field
+const HALFWAY_MSG_ELAPSED  = 60; // 1:00 — one-time personalized halfway message
+
 const PARTICLE_ANGLES = Array.from({ length: 6 }, (_, i) => (i * 60 * Math.PI) / 180);
 const PARTICLE_COLORS = ["#FF6B7A", "#FFFFFF", "#A8EDFF", "#FFD6DC", "#FFFFFF", "#FF6B7A"];
 
@@ -93,7 +103,9 @@ export default function Brush() {
   const [noPhotoMsg, setNoPhotoMsg] = useState(false);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [msgIndex, setMsgIndex] = useState(0);
-  const [mascotState, setMascotState] = useState<{ fromLeft: boolean } | null>(null);
+  const [mascotState, setMascotState] = useState<{ fromLeft: boolean; duration: number } | null>(null);
+  const [bubblePulse, setBubblePulse] = useState(false);
+  const [specialMsg, setSpecialMsg] = useState<string | null>(null);
 
   const bubbles = useMemo(() => generateBubbles(BUBBLE_COUNT), []);
 
@@ -106,11 +118,10 @@ export default function Brush() {
   const particleIdRef = useRef(0);
   const msgIntervalRef = useRef<number | null>(null);
   const prevUrgentRef = useRef(false);
-  // Mascot cameo timing — randomised per session
-  const cameo1ElapsedRef = useRef(0); // seconds elapsed when first cameo fires (45–60s)
-  const cameo2ElapsedRef = useRef(0); // seconds elapsed when second cameo fires (90–105s)
-  const cameo1FiredRef = useRef(false);
-  const cameo2FiredRef = useRef(false);
+  // Timed visual stimulus tracking
+  const scurriesFiredRef = useRef<boolean[]>([false, false, false, false]);
+  const bubblePulseFiredRef = useRef(false);
+  const specialMsgFiredRef = useRef(false);
 
   // Derived state
   const isUrgent = isBrushing && timeLeft > 0 && timeLeft <= URGENCY_THRESHOLD;
@@ -120,7 +131,9 @@ export default function Brush() {
     [profile?.name]  // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  const currentMsg = isUrgent
+  const currentMsg = specialMsg
+    ? specialMsg
+    : isUrgent
     ? URGENCY_MESSAGES[msgIndex % URGENCY_MESSAGES.length]
     : (normalMessages[msgIndex % normalMessages.length] ?? "Keep brushing!");
 
@@ -177,16 +190,25 @@ export default function Brush() {
         const el = (Date.now() - startedAt) / 1000;
         const rem = Math.max(0, TOTAL_TIME - el);
         setTimeLeft(Math.ceil(rem));
-        // Mascot cameos in resumed session
-        if (!cameo1FiredRef.current && rem > URGENCY_THRESHOLD && el >= cameo1ElapsedRef.current) {
-          cameo1FiredRef.current = true;
-          setMascotState({ fromLeft: true });
-          setTimeout(() => setMascotState(null), 3500);
+        // Timed scurries in resumed session
+        SCURRIES.forEach((scurry, i) => {
+          if (!scurriesFiredRef.current[i] && rem > URGENCY_THRESHOLD && el >= scurry.elapsed) {
+            scurriesFiredRef.current[i] = true;
+            setMascotState({ fromLeft: scurry.fromLeft, duration: scurry.duration });
+            setTimeout(() => setMascotState(null), (scurry.duration + 0.6) * 1000);
+          }
+        });
+        // Bubble pulse at 1:15
+        if (!bubblePulseFiredRef.current && el >= BUBBLE_PULSE_ELAPSED) {
+          bubblePulseFiredRef.current = true;
+          setBubblePulse(true);
+          setTimeout(() => setBubblePulse(false), 1500);
         }
-        if (!cameo2FiredRef.current && rem > URGENCY_THRESHOLD && el >= cameo2ElapsedRef.current) {
-          cameo2FiredRef.current = true;
-          setMascotState({ fromLeft: false });
-          setTimeout(() => setMascotState(null), 3500);
+        // Halfway message at 1:00
+        if (!specialMsgFiredRef.current && profile && el >= HALFWAY_MSG_ELAPSED) {
+          specialMsgFiredRef.current = true;
+          setSpecialMsg(`Halfway there, ${profile.name}! You're crushing it! 🦷`);
+          setTimeout(() => setSpecialMsg(null), MSG_INTERVAL_MS);
         }
         if (rem <= 0) {
           clearInterval(intervalRef.current!);
@@ -209,11 +231,10 @@ export default function Brush() {
         }
       }, 100);
 
-      // Set cameo trigger times — mark already-fired if elapsed time has passed the window
-      cameo1ElapsedRef.current = 45 + Math.random() * 15;
-      cameo2ElapsedRef.current = 90 + Math.random() * 15;
-      cameo1FiredRef.current = elapsed >= cameo1ElapsedRef.current;
-      cameo2FiredRef.current = elapsed >= cameo2ElapsedRef.current;
+      // Mark visual triggers already-fired based on how far into session we resumed
+      scurriesFiredRef.current = SCURRIES.map(s => elapsed >= s.elapsed);
+      bubblePulseFiredRef.current = elapsed >= BUBBLE_PULSE_ELAPSED;
+      specialMsgFiredRef.current = elapsed >= HALFWAY_MSG_ELAPSED;
     } catch {
       localStorage.removeItem(RESUME_KEY);
     }
@@ -253,11 +274,9 @@ export default function Brush() {
     setTimeLeft(TOTAL_TIME);
     setMsgIndex(0);
     prevUrgentRef.current = false;
-    // Randomise cameo trigger times for this session
-    cameo1ElapsedRef.current = 45 + Math.random() * 15; // 45–60s elapsed
-    cameo2ElapsedRef.current = 90 + Math.random() * 15; // 90–105s elapsed
-    cameo1FiredRef.current = false;
-    cameo2FiredRef.current = false;
+    scurriesFiredRef.current = [false, false, false, false];
+    bubblePulseFiredRef.current = false;
+    specialMsgFiredRef.current = false;
     setIsBrushing(true);
 
     const now = Date.now();
@@ -283,16 +302,25 @@ export default function Brush() {
       const remaining = Math.max(0, TOTAL_TIME - elapsed);
       setTimeLeft(Math.ceil(remaining));
 
-      // Mascot cameos — only trigger outside urgency mode
-      if (!cameo1FiredRef.current && remaining > URGENCY_THRESHOLD && elapsed >= cameo1ElapsedRef.current) {
-        cameo1FiredRef.current = true;
-        setMascotState({ fromLeft: true });
-        setTimeout(() => setMascotState(null), 3500);
+      // Timed scurries — 4 fixed appearances across the session
+      SCURRIES.forEach((scurry, i) => {
+        if (!scurriesFiredRef.current[i] && remaining > URGENCY_THRESHOLD && elapsed >= scurry.elapsed) {
+          scurriesFiredRef.current[i] = true;
+          setMascotState({ fromLeft: scurry.fromLeft, duration: scurry.duration });
+          setTimeout(() => setMascotState(null), (scurry.duration + 0.6) * 1000);
+        }
+      });
+      // Bubble pulse ripple at 1:15
+      if (!bubblePulseFiredRef.current && elapsed >= BUBBLE_PULSE_ELAPSED) {
+        bubblePulseFiredRef.current = true;
+        setBubblePulse(true);
+        setTimeout(() => setBubblePulse(false), 1500);
       }
-      if (!cameo2FiredRef.current && remaining > URGENCY_THRESHOLD && elapsed >= cameo2ElapsedRef.current) {
-        cameo2FiredRef.current = true;
-        setMascotState({ fromLeft: false });
-        setTimeout(() => setMascotState(null), 3500);
+      // One-time halfway message at 1:00
+      if (!specialMsgFiredRef.current && profile && elapsed >= HALFWAY_MSG_ELAPSED) {
+        specialMsgFiredRef.current = true;
+        setSpecialMsg(`Halfway there, ${profile.name}! You're crushing it! 🦷`);
+        setTimeout(() => setSpecialMsg(null), MSG_INTERVAL_MS);
       }
 
       if (remaining <= 0) {
@@ -412,9 +440,17 @@ export default function Brush() {
                   opacity: [1, 0.8, 0],
                   transition: { duration: 0.4, times: [0, 0.3, 1], ease: "easeOut" },
                 }}
-                animate={isUrgent ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+                animate={
+                  bubblePulse
+                    ? { scale: [1, 1.03, 1] }
+                    : isUrgent
+                    ? { scale: [1, 1.08, 1] }
+                    : { scale: 1 }
+                }
                 transition={
-                  isUrgent
+                  bubblePulse
+                    ? { scale: { duration: 0.35, delay: (bubble.x / 100) * 0.65, ease: "easeInOut" } }
+                    : isUrgent
                     ? { scale: { duration: 0.5, repeat: Infinity, ease: "easeInOut" } }
                     : { scale: { duration: 0.2 } }
                 }
@@ -500,7 +536,7 @@ export default function Brush() {
             zIndex: 16,
             background: "transparent",
             backgroundColor: "transparent",
-            animation: `${mascotState.fromLeft ? "mascot-slide-ltr" : "mascot-slide-rtl"} 3s linear forwards`,
+            animation: `${mascotState.fromLeft ? "mascot-slide-ltr" : "mascot-slide-rtl"} ${mascotState.duration}s linear forwards`,
             ...(mascotState.fromLeft ? {} : { transform: "scaleX(-1)" }),
           }}
         >
@@ -613,7 +649,7 @@ export default function Brush() {
               {/* Rotating encouragement message — fades + scale-pops on change */}
               <AnimatePresence mode="wait">
                 <motion.h2
-                  key={`${isUrgent ? "u" : "n"}-${msgIndex}`}
+                  key={specialMsg ? "special" : `${isUrgent ? "u" : "n"}-${msgIndex}`}
                   initial={{ opacity: 0, scale: 0.97 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.97 }}
