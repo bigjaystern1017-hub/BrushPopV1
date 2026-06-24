@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AnimatePresence } from "framer-motion";
 import NotFound from "@/pages/not-found";
+import NavDrawer from "@/components/NavDrawer";
 
 import KidSelect from "./pages/KidSelect";
 import Setup from "./pages/Setup";
@@ -43,6 +44,7 @@ function App() {
         {!splashDone && <Splash onComplete={() => setSplashDone(true)} />}
         <div style={{ visibility: splashDone ? "visible" : "hidden" }}>
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <NavDrawer />
             <Router />
           </WouterRouter>
           <Toaster />
