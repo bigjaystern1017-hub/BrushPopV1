@@ -1,9 +1,10 @@
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { ChevronLeft, Phone, CalendarCheck } from "lucide-react";
-import { CLINIC } from "@/lib/clinicConfig";
+import { useClinic } from "@/hooks/useClinic";
 
 export default function About() {
+  const clinic = useClinic();
   const [, setLocation] = useLocation();
 
   return (
@@ -28,15 +29,15 @@ export default function About() {
 
       <div className="flex-1 p-5 flex flex-col gap-5">
         {/* Logo */}
-        {CLINIC.logoUrl && (
+        {clinic.logoUrl && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex justify-center pt-4"
           >
             <img
-              src={CLINIC.logoUrl}
-              alt={CLINIC.name}
+              src={clinic.logoUrl}
+              alt={clinic.name}
               className="h-28 object-contain drop-shadow-md"
             />
           </motion.div>
@@ -49,9 +50,9 @@ export default function About() {
           transition={{ delay: 0.1 }}
           className="bg-white rounded-3xl p-6 shadow-sm text-center"
         >
-          <h2 className="text-2xl font-black text-primary mb-3">{CLINIC.name}</h2>
+          <h2 className="text-2xl font-black text-primary mb-3">{clinic.name}</h2>
           <p className="text-foreground/70 font-medium leading-relaxed text-base">
-            {CLINIC.description}
+            {clinic.description}
           </p>
         </motion.div>
 
@@ -64,7 +65,7 @@ export default function About() {
         >
           {/* Phone */}
           <a
-            href={`tel:${CLINIC.phone.replace(/\D/g, "")}`}
+            href={`tel:${clinic.phone.replace(/\D/g, "")}`}
             className="flex items-center gap-4 px-5 py-4 hover:bg-muted transition-colors active:bg-muted"
             data-testid="link-phone"
           >
@@ -75,7 +76,7 @@ export default function About() {
               <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-0.5">
                 Call us
               </p>
-              <p className="font-black text-foreground text-lg">{CLINIC.phone}</p>
+              <p className="font-black text-foreground text-lg">{clinic.phone}</p>
             </div>
           </a>
 
@@ -83,7 +84,7 @@ export default function About() {
 
           {/* Booking */}
           <a
-            href={CLINIC.bookingUrl}
+            href={clinic.bookingUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-4 px-5 py-4 hover:bg-muted transition-colors active:bg-muted"
@@ -103,7 +104,7 @@ export default function About() {
 
         {/* Book CTA button */}
         <motion.a
-          href={CLINIC.bookingUrl}
+          href={clinic.bookingUrl}
           target="_blank"
           rel="noopener noreferrer"
           initial={{ opacity: 0, y: 10 }}

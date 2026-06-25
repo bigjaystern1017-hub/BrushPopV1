@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trophy, Settings, Flame, Camera, X, ShieldCheck } from "lucide-react";
 import { useProfiles } from "@/lib/useProfiles";
 import { useSessions } from "@/lib/useSessions";
-import { CLINIC } from "@/lib/clinicConfig";
+import { useClinic } from "@/hooks/useClinic";
 import { KidProfile } from "@/lib/types";
 
 const THEME_ICONS: Record<string, string> = {
@@ -26,6 +26,7 @@ const PRIVACY_TEXT =
   "BrushPop does not collect or store any personal data on external servers. All photos, profiles, and streak data are stored privately on your own device and are never shared with anyone. This app is not a medical application and does not access any health or patient data.";
 
 export default function KidSelect() {
+  const clinic = useClinic();
   const { profiles } = useProfiles();
   const { getStreak } = useSessions();
   const [, setLocation] = useLocation();
@@ -58,12 +59,12 @@ export default function KidSelect() {
           />
 
           {/* Dentist branding pill — second thing a parent sees */}
-          {CLINIC.showBranding && (
+          {clinic.showBranding && (
             <div className="flex items-center gap-3 bg-white/82 backdrop-blur-sm rounded-full px-4 py-2.5 shadow-md">
               {/* Clinic logo circle */}
               <div className="w-9 h-9 rounded-full bg-sky-50 border-2 border-white/80 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
-                {CLINIC.logoUrl ? (
-                  <img src={CLINIC.logoUrl} alt={CLINIC.name} className="w-full h-full object-contain p-0.5" />
+                {clinic.logoUrl ? (
+                  <img src={clinic.logoUrl} alt={clinic.name} className="w-full h-full object-contain p-0.5" />
                 ) : (
                   <span className="text-xl leading-none">🦷</span>
                 )}
@@ -75,7 +76,7 @@ export default function KidSelect() {
                   Presented by
                 </p>
                 <p className="text-base font-black text-foreground leading-tight">
-                  {CLINIC.name}
+                  {clinic.name}
                 </p>
               </div>
             </div>

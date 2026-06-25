@@ -1,0 +1,79 @@
+I need to convert the current single-clinic config system into a multi-clinic 
+system where each clinic gets its own unique URL using a ?clinic= parameter.
+
+Here is exactly what needs to be built:
+
+STEP 1 — Update clinicConfig.ts
+
+Replace the current single CLINIC export with the following structure:
+
+export type ClinicConfig = {
+  name: string;
+  phone: string;
+  bookingUrl: string;
+  description: string;
+  logoUrl: string | null;
+  showBranding: boolean;
+};
+
+export const CLINICS: Record<string, ClinicConfig> = {
+  warren: {
+    name: "Just for Warren!! 🦷✨",
+    phone: "",
+    bookingUrl: "",
+    description: "This app was made just for you, Warren! Keep popping those bubbles!",
+    logoUrl: "/brushpop-logo.png",
+    showBranding: true,
+  },
+  demo: {
+    name: "Smith Pediatric Dentistry",
+    phone: "(919) 555-0100",
+    bookingUrl: "https://smithpediatricdentistry.com/book",
+    description: "We're a family-focused pediatric dental practice dedicated to making every visit fun and fear-free.",
+    logoUrl: "/brushpop-logo.png",
+    showBranding: true,
+  },
+};
+
+export const DEFAULT_CLINIC: ClinicConfig = {
+  name: "Your Pediatric Dentist",
+  phone: "(555) 123-4567",
+  bookingUrl: "",
+  description: "We're a family-focused pediatric dental practice dedicated to making every visit fun and fear-free.",
+  logoUrl: "/brushpop-logo.png",
+  showBranding: true,
+};
+
+STEP 2 — Create a useClinic hook
+
+Create a new file at src/hooks/useClinic.ts with the following logic:
+- On app load, read the ?clinic= URL parameter
+- Look up that slug in the CLINICS dictionary
+- If found, return that clinic's config
+- If not found or no slug present, return DEFAULT_CLINIC
+- Store the resolved clinic config in React state
+- Export the hook as useClinic
+
+STEP 3 — Update the app to use the new hook
+
+Find every place in the codebase that currently references the old CLINIC import 
+from clinicConfig.ts and replace it with the useClinic hook. This includes:
+- The splash screen "Presented by" pill
+- The home screen branding
+- The About Our Practice page
+- The celebration screen booking CTA
+
+STEP 4 — Verify the default experience
+
+When someone visits app.brushpop.net with no ?clinic= parameter, the app should 
+show neutral default BrushPop branding, not any specific dentist's information.
+
+When someone visits app.brushpop.net?clinic=warren it should show Warren's config.
+When someone visits app.brushpop.net?clinic=demo it should show Smith Pediatric 
+Dentistry's config.
+
+Do not change: audio logic, bubble mechanic, streak logic, celebration screen 
+layout, or any styling. Only change the data layer and how clinic info is loaded.
+
+After making these changes, tell me every file you modified so I can verify nothing 
+unexpected was touched.

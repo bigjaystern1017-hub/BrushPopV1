@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CLINIC } from "@/lib/clinicConfig";
+import { useClinic } from "@/hooks/useClinic";
 
 interface SplashProps {
   onComplete: () => void;
 }
 
 export default function Splash({ onComplete }: SplashProps) {
+  const clinic = useClinic();
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
@@ -82,7 +83,7 @@ export default function Splash({ onComplete }: SplashProps) {
           </div>
 
           {/* Dentist branding pill — directly below logo */}
-          {CLINIC.showBranding && (
+          {clinic.showBranding && (
             <motion.div
               className="flex items-center gap-3 bg-white/82 backdrop-blur-sm rounded-full px-4 py-2.5 shadow-md mt-3 relative z-10"
               initial={{ opacity: 0, y: 8 }}
@@ -91,8 +92,8 @@ export default function Splash({ onComplete }: SplashProps) {
             >
               {/* Clinic logo circle */}
               <div className="w-9 h-9 rounded-full bg-sky-50 border-2 border-white/80 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
-                {CLINIC.logoUrl ? (
-                  <img src={CLINIC.logoUrl} alt={CLINIC.name} className="w-full h-full object-contain p-0.5" />
+                {clinic.logoUrl ? (
+                  <img src={clinic.logoUrl} alt={clinic.name} className="w-full h-full object-contain p-0.5" />
                 ) : (
                   <span className="text-xl leading-none">🦷</span>
                 )}
@@ -104,7 +105,7 @@ export default function Splash({ onComplete }: SplashProps) {
                   Presented by
                 </p>
                 <p className="text-base font-black text-foreground leading-tight">
-                  {CLINIC.name}
+                  {clinic.name}
                 </p>
               </div>
             </motion.div>

@@ -3,9 +3,10 @@ import { useLocation, useParams } from "wouter";
 import { motion } from "framer-motion";
 import { useProfiles } from "@/lib/useProfiles";
 import { useSessions, computeStreak, localDateStr } from "@/lib/useSessions";
-import { CLINIC } from "@/lib/clinicConfig";
+import { useClinic } from "@/hooks/useClinic";
 
 export default function Celebrate() {
+  const clinic = useClinic();
   const [, setLocation] = useLocation();
   const params = useParams();
   const { getProfile, loaded } = useProfiles();
@@ -150,16 +151,16 @@ export default function Celebrate() {
             </div>
           </motion.div>
 
-          {CLINIC.showBranding && (
+          {clinic.showBranding && (
             <div className="w-full mb-4 bg-white/80 backdrop-blur-sm rounded-2xl p-4 text-center">
               <p className="text-foreground/50 text-xs font-bold mb-2">
                 Healthy smiles brought to you by
               </p>
               <p className="text-foreground font-black text-base">
-                {CLINIC.name}
+                {clinic.name}
               </p>
               <a
-                href={CLINIC.bookingUrl}
+                href={clinic.bookingUrl}
                 className="inline-block mt-3 bg-accent text-white font-bold text-sm py-2 px-6 rounded-full shadow-md active:scale-95 transition-transform"
               >
                 📞 Book Your Next Checkup
