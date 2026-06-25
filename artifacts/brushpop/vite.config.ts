@@ -53,7 +53,23 @@ export default defineConfig({
         // Take control immediately on install — no waiting for tabs to close
         skipWaiting: true,
         clientsClaim: true,
+        // Remove caches left behind by old SW versions on activation
+        cleanupOutdatedCaches: true,
+        // Serve index.html for any navigation request that isn't precached
+        // (handles deep-link offline navigation for clinic slug paths like /warren)
+        navigateFallback: "index.html",
         runtimeCaching: [
+          // App shell (navigation routes, e.g. /warren, /demo) — stale-while-revalidate:
+          // serve the cached version instantly for performance, always fetch fresh in bg.
+          // Only matches path-only URLs with no file extension (SPA navigation routes).
+          {
+            urlPattern: /^https?:\/\/[^/]+(\/[^/.]*)*\/?$/,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "app-navigation",
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
           // Google Fonts stylesheet — cache-first so they work offline
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
