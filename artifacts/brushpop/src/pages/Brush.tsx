@@ -414,7 +414,7 @@ export default function Brush() {
       `}</style>
 
       {/* Hidden photo underneath */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0" style={{ backgroundColor: "#FF6B7A" }}>
         <img src={profile.imageBase64} alt="Hidden" className="w-full h-full object-contain" />
       </div>
 
@@ -494,6 +494,14 @@ export default function Brush() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Vignette — masks corner/edge gaps; sits above bubbles, below particles and UI */}
+      <div
+        className="absolute inset-0 z-[13] pointer-events-none"
+        style={{
+          background: "radial-gradient(ellipse at center, transparent 60%, rgba(10, 22, 40, 0.6) 100%)",
+        }}
+      />
 
       {/* Particle bursts — between bubbles and UI overlay */}
       {particles.map((pt) => (
