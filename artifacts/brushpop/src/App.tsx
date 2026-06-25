@@ -29,6 +29,7 @@ function Router() {
         <Route path="/streak/:id" component={StreakPage} />
         <Route path="/photos/:id" component={Photos} />
         <Route path="/about" component={About} />
+        <Route path="/:clinicSlug" component={KidSelect} />
         <Route component={NotFound} />
       </Switch>
     </AnimatePresence>
