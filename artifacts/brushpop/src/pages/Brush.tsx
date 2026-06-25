@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { useProfiles } from "@/lib/useProfiles";
 
 const TOTAL_TIME = 120;
-const BUBBLE_COUNT = 160;
+const BUBBLE_COUNT = 286;
 const RESUME_KEY = "brushpop_resume";
 const URGENCY_THRESHOLD = 15;
 const MSG_INTERVAL_MS = 8000;
@@ -47,17 +47,17 @@ const URGENCY_MESSAGES = [
 
 function generateBubbles(count: number): { id: number; x: number; y: number; size: number; hue: number; delay: number }[] {
   const bubbles: { id: number; x: number; y: number; size: number; hue: number; delay: number }[] = [];
-  const gridCols = 10;
-  const gridRows = 16;
+  const gridCols = 13;
+  const gridRows = 22;
   for (let row = 0; row < gridRows; row++) {
     for (let col = 0; col < gridCols; col++) {
       const id = bubbles.length;
       const xOffset = row % 2 === 0 ? 0 : (100 / gridCols) / 2;
       bubbles.push({
         id,
-        x: (col / gridCols) * 100 + xOffset + (Math.random() - 0.5) * 3,
-        y: (row / gridRows) * 100 + (Math.random() - 0.5) * 2,
-        size: Math.max(13, 14 + (Math.random() - 0.5) * 4),
+        x: (col / gridCols) * 100 + xOffset + (Math.random() - 0.5) * 2,
+        y: (row / gridRows) * 100 + (Math.random() - 0.5) * 1.5,
+        size: Math.max(10, 10 + Math.random() * 3.5),
         hue: 195 + Math.random() * 20,
         delay: Math.random() * 0.15,
       });
@@ -428,7 +428,7 @@ export default function Brush() {
       {/* Bubble visual layer — scaled 8% larger so bubbles reach every edge; pointer-events-none so taps pass through to capture layer above */}
       <div
         className="absolute inset-0 z-10 pointer-events-none"
-        style={{ transform: "scale(1.08)", transformOrigin: "center center" }}
+        style={{ transform: "scale(1.08)", transformOrigin: "center center", overflow: "visible" }}
       >
         <AnimatePresence>
           {bubbles.map((bubble) =>
